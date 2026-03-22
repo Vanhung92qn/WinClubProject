@@ -35,6 +35,17 @@
 - **SQL migration:** `20260322_bcrypt_migration.sql` — expand `SP_Register._password` từ VARCHAR(45) lên VARCHAR(125), expand `update_user_info.p_new` từ NVARCHAR(100) lên NVARCHAR(125).
 - **Client:** `PopUplogin.ts` xóa method `md52()` trùng lặp, dùng `PortalPassword.forApi()` thống nhất.
 
+### 2026-03-22 — Phase 3B: AuthService + Phase 3C: Game Bundle Lifecycle
+
+- **AuthService.ts** (MỚI tại `core/auth/AuthService.ts`):
+  - `login(username, password, callback)` — Single source of truth cho login: encrypt → API call → parse sessionKey → populate Configs.Login → connect WS → broadcast.
+  - `logout()` — clear state + disconnect all WS + broadcast USER_LOGOUT.
+  - **Trước:** Login logic duplicate trong PopUplogin.ts (52 dòng) VÀ LobbyController.ts (68 dòng) → fix 1 chỗ quên chỗ kia.
+  - **Sau:** Cả 2 gọi `AuthService.login()` → 1 path duy nhất, ~8 dòng mỗi nơi.
+- **LobbyController.ts:** Xóa `md52()` duplicate, `actLogin()` giảm từ 68→15 dòng, `actBack()` dùng `AuthService.logout()`, xóa 4 unused imports.
+- **PopUplogin.ts:** Xóa toàn bộ login logic (55 dòng), xóa 8 unused imports, chỉ còn gọi AuthService + UI callback.
+- **Game Bundle Lifecycle (Phase 3C):** `App.ts` track `_currentGameBundle` khi vào game → `BundleControl.releaseGameBundle()` khi quay Lobby. Áp dụng cho cả `loadSceneFromBundle` và `loadSceneInSubpackage`.
+
 ### 2026-03-22 — Network Architecture: Domain-based + WSS + Centralized Config
 
 - **Mục tiêu:** Đổi domain (ví dụ sang win88.club) = sửa 1 dòng trong `VersionConfig.ts`.

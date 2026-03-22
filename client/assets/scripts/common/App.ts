@@ -399,6 +399,8 @@ export default class App extends cc.Component {
             this.actShowThongBao('Game đang tải, vui lòng chờ!');
             return;
         }
+        // Track game bundle for release when returning to Lobby
+        this._currentGameBundle = subpackageName;
         App.instance.isDownloadingGame = true;
         let loadingNode = null;
         let loadingNodeBg = null;

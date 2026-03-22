@@ -18,10 +18,8 @@ import ShootFishNetworkClient from "../../../../scripts/networks/ShootFishNetwor
 import AudioManager from "../../../../scripts/common/Common.AudioManager";
 import {Tophudata} from '../Lobby.ItemTopHu';
 import TopHu from "../Lobby.TopHu";
-import BauCuaTo2NetworkClient from "../../../../scripts/networks/BauCuaTo2NetworkClient";
 import PopupSecurityPhone from "../Lobby.PopupSecurityPhone";
 import nodeUtils from "../../../../scripts/common/NodeUtils";
-import TaiXiuNetWorkClient from "../../../../scripts/networks/TaiXiuNetWorkClient";
 import MiniGame from "../../../../scripts/common/MiniGame";
 import LobbyLobbyController from "./Lobby.LobbyController";
 import ShopTabEnum from "../enum/ShopTabEnum";
@@ -29,16 +27,14 @@ import GameConfigManager from "../../../../scripts/common/game/GameConfigManager
 import ApiIDEnum from "../enum/ApiIDEnum";
 import LobbySystemMessage from "../Lobby.SystemMessage";
 import GameURL from "../../../../scripts/common/game/GameURL";
-import TaiXiuMD5NetWorkClient from "../../../../scripts/networks/TaiXiuMD5NetWorkClient";
 import GameErrorMessage from "../../../../scripts/enum/GameErrorMessage";
 import BundleControl from "../../../../scripts/common/BundleControl";
 import PopupManager, { PopupTier } from "../../../../core/utils/PopupManager";
+import AuthService from "../../../../core/auth/AuthService";
 import GameSuccessMessage from "../../../../scripts/enum/GameSuccessMessage";
 // import * as pako from 'pako';
 
 const {ccclass, property} = cc._decorator;
-
-var countIdx = 0;
 
 @ccclass("MinigameGroup")
 export class Minigame {
@@ -381,21 +377,10 @@ namespace Lobby {
             }, this);
 
             BroadcastReceiver.register(BroadcastReceiver.USER_LOGOUT, (data) => {
-                Configs.Login.clear();
+                // AuthService handles: clear state, disconnect WS, hide miniGame button
+                // Here we only handle Lobby UI updates
                 this.panelNotLogin.active = true;
                 this.panelLogined.active = false;
-                // this.edbUsername.string = SPUtils.getUserName();
-                // this.edbPassword.string = SPUtils.getUserPass();
-                SPUtils.setUserName("");
-                SPUtils.setUserPass("");
-                MiniGameNetworkClient.getInstance().close();
-                TaiXiuNetWorkClient.getInstance().close();
-                TaiXiuMD5NetWorkClient.getInstance().close();
-                SlotNetworkClient.getInstance().close();
-                TienLenNetworkClient.getInstance().close();
-                ShootFishNetworkClient.getInstance().close();
-                BauCuaTo2NetworkClient.getInstance().close();
-                App.instance.buttonMiniGame.hidden();
             }, this);
 
             // this.edbUsername.string = SPUtils.getUserName();
@@ -844,100 +829,33 @@ namespace Lobby {
                 new Tophudata("gainhay", "Gái Nhảy", j10000));
         }
         
-        md52(message = '', key = ''){
-            let m = CryptoJS.AES.encrypt(message, key);
-            return base64.encode (m.toString());
-        }
-       
-
         actLogin(): void {
-            // console.log("actLogin");
             let username = SPUtils.getUserName().trim();
             let password = (SPUtils.getUserPass() || "").trim();
 
-            if (username.length == 0) {
-                App.instance.alertDialog.showMsg("Tên đăng nhập không được để trống.");
-                return;
-            }
-
-            if (password.length == 0) {
-                App.instance.alertDialog.showMsg("Mật khẩu không được để trống.");
-                return;
-            }
-
-            App.instance.showLoading2(true);
-            Http.get(Configs.App.API, {c: 3, un: username, pw: this.md52(password,"12345"), pf: Utils.getPlatform(), countIdx: countIdx}, (err, res) => {
-                countIdx++;
-                App.instance.showLoading2(false);
-                if (err != null) {
-                    App.instance.alertDialog.showMsg("Đăng nhập không thành công, vui lòng kiểm tra lại kết nối.");
+            AuthService.login(username, password, (result) => {
+                if (result.success) {
+                    this.panelNotLogin.active = false;
+                    this.panelLogined.active = true;
+                    this.gesecretCode();
+                    this.loadListMail();
+                    this.actOpenBigBanner();
                     return;
                 }
-                // console.log(res);
-                switch (parseInt(res["errorCode"])) {
-                    case 0:
-                        // console.log("Đăng nhập thành công.");
-                        Configs.Login.AccessToken = res["accessToken"];
-                        Configs.Login.SessionKey = res["sessionKey"];
-                        Configs.Login.Username = username;
-                        Configs.Login.Password = password;
-                        Configs.Login.IsLogin = true;
-                        var userInfo = JSON.parse(base64.decode(Configs.Login.SessionKey));
-                        Configs.Login.Nickname = userInfo["nickname"];
-                        Configs.Login.UserId = userInfo["id"];
-                        Configs.Login.Avatar = userInfo["avatar"];
-                        Configs.Login.Coin = userInfo["vinTotal"];
-                        Configs.Login.LuckyWheel = userInfo["luckyRotate"];
-                        Configs.Login.IpAddress = userInfo["ipAddress"];
-                        Configs.Login.CreateTime = userInfo["createTime"];
-                        Configs.Login.Birthday = userInfo["birthday"];
-                        Configs.Login.Birthday = userInfo["birthday"];
-                        Configs.Login.VipPoint = userInfo["vippoint"];
-                        Configs.Login.VipPointSave = userInfo["vippointSave"];
-                        Configs.Login.MobileSecured = userInfo["mobileSecure"] !== 0;
-                        Configs.Login.AppSecured = userInfo["appSecure"] !== 0;
-                        Configs.Login.BanTransfer = userInfo["banTransfer"];
-                        // MiniGameNetworkClient.getInstance().checkConnect();
-                        MiniGameNetworkClient.getInstance().sendCheck(new cmd.ReqSubcribeJackpots());
-                        MiniGameNetworkClient.getInstance().sendCheck(new cmd.ReqGetSecurityInfo());
-                        TaiXiuNetWorkClient.getInstance().checkConnect(() => {});
-                        SlotNetworkClient.getInstance().sendCheck(new cmd.ReqSubcribeHallSlot());
-                        ShootFishNetworkClient.getInstance().checkConnect(() => {
-                            BroadcastReceiver.send(BroadcastReceiver.USER_UPDATE_COIN);
-                        });
-                        this.loadListMail();
 
-                        this.panelNotLogin.active = false;
-                        this.panelLogined.active = true;
-
-                        SPUtils.setUserName(Configs.Login.Username);
-                        SPUtils.setUserPass(Configs.Login.Password);
-                        this.gesecretCode();
-                        App.instance.buttonMiniGame.show();
-
-                        BroadcastReceiver.send(BroadcastReceiver.USER_INFO_UPDATED);
-                        this.actOpenBigBanner();
-                        break;
-                    case 1007:
-                        App.instance.alertDialog.showMsg(GameErrorMessage.WRONG_LOGIN_INFORMATION);
-                        break;
-                    case 1109:
-                        App.instance.alertDialog.showMsg(GameErrorMessage.ACCOUNT_LOCKED);
-                        break;
-                    case 2001:
-                        PopupManager.instance.openPopup('PopupUpdateNickName', LobbyLobbyController._instance.nodeLobby);
-                        return;
-                    default:
-                        App.instance.alertDialog.showMsg(GameErrorMessage.LOGIN_FAILED);
-                        break;
+                if (result.needNickname) {
+                    PopupManager.instance.openPopup('PopupUpdateNickName', this.nodeLobby);
+                    return;
                 }
+
+                App.instance.alertDialog.showMsg(result.message);
             });
         }
 
         actBack() {
             App.instance.confirmDialog.show3("Bạn có muốn đăng xuất khỏi tài khoản?", "ĐĂNG XUẤT", (isConfirm) => {
                 if (isConfirm) {
-                    BroadcastReceiver.send(BroadcastReceiver.USER_LOGOUT);
+                    AuthService.logout();
                 }
             });
         }
