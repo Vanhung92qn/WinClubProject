@@ -1,4 +1,4 @@
-import Http from "./Http";
+import Http from "../../core/network/Http";
 import Configs from "./Configs";
 
 const {ccclass, property} = cc._decorator;

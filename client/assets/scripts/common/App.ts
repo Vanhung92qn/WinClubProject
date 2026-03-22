@@ -5,7 +5,7 @@ import BroadcastReceiver from "./BroadcastReceiver";
 import MiniGameNetworkClient from "../networks/MiniGameNetworkClient";
 import Configs from "./Configs";
 import SlotNetworkClient from '../networks/SlotNetworkClient';
-import Http from './Http';
+import Http from '../../core/network/Http';
 import TaiXiuNetWorkClient from '../networks/TaiXiuNetWorkClient';
 import LoadingCirle from "./LoadingCirle";
 import nodeUtils from "./NodeUtils";

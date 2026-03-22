@@ -1,5 +1,5 @@
 import SPUtils from "./SPUtils";
-import Http from "./Http";
+import Http from "../../core/network/Http";
 import VersionConfig from "./VersionConfig";
 
 namespace Configs {
