@@ -102,6 +102,7 @@ export default class ShootFishNetworkClient {
     }
 
     private login() {
+        console.log("[WS-Fish] login() called, isLogining:", this.isLogining, "username:", Configs.Login.Username);
         if (this.isLogining) return;
         this.isLogining = true;
         // App.instance.showErrLoading("Đang đăng nhập...");
@@ -117,8 +118,9 @@ export default class ShootFishNetworkClient {
         }, (res) => {
             this.isLogining = false;
             App.instance.showLoading(false);
-               // console.log(res);
+            console.log("[WS-Fish] xxenglogin response:", JSON.stringify(res));
             if (!res["ok"]) {
+                console.warn("[WS-Fish] login failed, res:", JSON.stringify(res));
                 if (this.onLogined != null) this.onLogined(false);
                 return;
             }
