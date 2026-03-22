@@ -35,6 +35,24 @@
 - **SQL migration:** `20260322_bcrypt_migration.sql` — expand `SP_Register._password` từ VARCHAR(45) lên VARCHAR(125), expand `update_user_info.p_new` từ NVARCHAR(100) lên NVARCHAR(125).
 - **Client:** `PopUplogin.ts` xóa method `md52()` trùng lặp, dùng `PortalPassword.forApi()` thống nhất.
 
+### 2026-03-22 — WebSocket Security: WSS + Nginx Proxy + Reconnect Backoff
+
+- **Trước:** Client kết nối `ws://IP:port` trực tiếp đến game servers — plain text, port lộ, dễ MITM.
+- **Sau:** Production/Dev dùng `wss://domain/socket-client/{gamename}` → Nginx terminate TLS → proxy `ws://` internal.
+  - Client chỉ biết 1 domain, không biết port game servers.
+  - Tất cả traffic mã hóa TLS.
+  - Game servers chỉ listen trên internal network.
+- **Files:**
+  - `Network.NetworkClient.ts`: `buildWsUrl()` tự chọn `wss://` (production) hoặc `ws://` (local) dựa `Configs.App.USE_WSS`.
+  - Thêm **exponential backoff reconnect**: 2s → 4s → 8s → ... → 30s cap, max 10 attempts. Ngăn flood khi game server down.
+  - Nginx routes đã tồn tại tại `nginx/snippets/winclub-game-routes.inc` (`/socket-client/{gamename}`).
+
+### 2026-03-22 — Login speed: kickSession async (5s → 0 block)
+
+- **Trước:** `PortalUtils.kickSession()` chạy while-loop chờ game server xóa Hazelcast key, block thread Jetty 5s (timeout).
+- **Sau:** `kickSession()` chạy trong background thread (fire-and-forget), login response trả về ngay lập tức.
+- **Kết quả:** Login API từ 10-15s → ~0.37s.
+
 ### 2026-03-22 — Fix Popup.ts crash (callback is not a function)
 
 - **Nguyên nhân:** `XocDiaLiveKub.PopupGuide.ts` gọi `super.runActionClose(returnValue)` truyền giá trị trả về thay vì callback function.

@@ -12,33 +12,59 @@ export default class NetworkClient {
     _onOpenes: Array<NetworkListener> = [];
     _onCloses: Array<NetworkListener> = [];
 
-     connect(host: string, port: number) {
-        // console.log("start connect: " + host + ":" + port);
+    // Reconnect rate limiting: exponential backoff
+    private _reconnectAttempts: number = 0;
+    private _maxReconnectAttempts: number = 10;
+    private _baseReconnectDelay: number = 2000;    // 2s initial
+    private _maxReconnectDelay: number = 30000;    // 30s max
+    private _reconnectTimer: any = null;
+
+    /**
+     * Build WebSocket URL based on environment config.
+     * - Production/Dev (USE_WSS=true): wss://domain/ws/gamename → Nginx proxy → game server
+     * - Local (USE_WSS=false): ws://host:port/websocket → direct connection
+     */
+    private buildWsUrl(host: string, port: number): string {
+        if (Configs.App.USE_WSS) {
+            // Route through Nginx: wss://domain/socket-client/{host}
+            // Nginx terminates TLS → proxies ws:// to internal game server
+            let domain = Configs.App.DOMAIN;
+            if (domain.endsWith('/')) domain = domain.slice(0, -1);
+            return `wss://${domain}/socket-client/${host}`;
+        }
+        // Local/test: direct connection (no TLS)
+        return `ws://${host}:${port}/websocket`;
+    }
+
+    connect(host: string, port: number) {
         this.isForceClose = false;
         this.host = host;
         this.port = port;
         if (this.ws == null) {
-            this.ws = new WebSocket("ws://" + host + ":" + port + "/websocket");
-            // if (this.isUseWSS) {
-            //     if (cc.sys.isNative && cc.sys.os == cc.sys.OS_ANDROID) {
-            //         let cacert = cc.url.raw('resources/raw/cacert.pem');
-            //         if (cc.loader.md5Pipe) {
-            //             cacert = cc.loader.md5Pipe.transformURL(cacert)
-            //         }
-            //         // @ts-ignore
-            //         this.ws = new WebSocket(`wss://${Configs.App.DOMAIN}/socket-client/${host}`, null, cacert);
-            //     } else {
-            //         this.ws = new WebSocket(`wss://${Configs.App.DOMAIN}/socket-client/${host}`);
-            //     }
-            // } else {
-            //     this.ws = new WebSocket(`ws://${Configs.App.DOMAIN}/socket-client/${host}`);
-            // }
+            let url = this.buildWsUrl(host, port);
+            console.log(`[WS] Connecting: ${url}`);
+            try {
+                if (Configs.App.USE_WSS && cc.sys.isNative && cc.sys.os == cc.sys.OS_ANDROID) {
+                    let cacert = cc.url.raw('resources/raw/cacert.pem');
+                    if (cc.loader.md5Pipe) {
+                        cacert = cc.loader.md5Pipe.transformURL(cacert);
+                    }
+                    // @ts-ignore - Cocos native WebSocket accepts cacert param
+                    this.ws = new WebSocket(url, [], cacert);
+                } else {
+                    this.ws = new WebSocket(url);
+                }
+            } catch (e) {
+                console.error(`[WS] Failed to create WebSocket: ${e}`);
+                this.ws = null;
+                this.scheduleReconnect();
+                return;
+            }
             this.ws.binaryType = "arraybuffer";
             this.ws.onopen = this.onOpen.bind(this);
             this.ws.onmessage = this.onMessage.bind(this);
             this.ws.onerror = this.onError.bind(this);
             this.ws.onclose = this.onClose.bind(this);
-            
         } else {
             if (this.ws.readyState !== WebSocket.OPEN) {
                 this.ws.close();
@@ -49,7 +75,8 @@ export default class NetworkClient {
     }
 
     protected onOpen(ev: Event) {
-        console.log("onOpen");
+        console.log("[WS] Connected: " + this.host);
+        this._reconnectAttempts = 0; // Reset backoff on success
         for (var i = 0; i < this._onOpenes.length; i++) {
             var listener = this._onOpenes[i];
             if (listener.target && listener.target instanceof Object && listener.target.node) {
@@ -62,15 +89,14 @@ export default class NetworkClient {
     }
 
     protected onMessage(ev: MessageEvent) {
-        // console.log("onmessage: " + ev.data);
     }
 
     protected onError(ev: Event) {
-        console.log("onError");
+        console.warn("[WS] Error: " + this.host);
     }
 
     protected onClose(ev: Event) {
-        console.log("onClose");
+        console.log("[WS] Closed: " + this.host);
         for (var i = 0; i < this._onCloses.length; i++) {
             var listener = this._onCloses[i];
             if (listener.target && listener.target instanceof Object && listener.target.node) {
@@ -80,11 +106,31 @@ export default class NetworkClient {
                 i--;
             }
         }
-        if (this.isAutoReconnect && !this.isForceClose) {
-            setTimeout(() => {
-                if (!this.isForceClose) this.connect(this.host, this.port);
-            }, 2000);
+        this.ws = null;
+        this.scheduleReconnect();
+    }
+
+    /**
+     * Exponential backoff reconnect: 2s → 4s → 8s → 16s → 30s (cap)
+     * Prevents flood when game server is down.
+     */
+    private scheduleReconnect() {
+        if (!this.isAutoReconnect || this.isForceClose) return;
+        if (this._reconnectAttempts >= this._maxReconnectAttempts) {
+            console.warn(`[WS] Max reconnect attempts (${this._maxReconnectAttempts}) reached for ${this.host}`);
+            return;
         }
+        let delay = Math.min(
+            this._baseReconnectDelay * Math.pow(2, this._reconnectAttempts),
+            this._maxReconnectDelay
+        );
+        this._reconnectAttempts++;
+        console.log(`[WS] Reconnect #${this._reconnectAttempts} in ${delay}ms: ${this.host}`);
+        if (this._reconnectTimer) clearTimeout(this._reconnectTimer);
+        this._reconnectTimer = setTimeout(() => {
+            this._reconnectTimer = null;
+            if (!this.isForceClose) this.connect(this.host, this.port);
+        }, delay);
     }
 
     addOnOpen(callback: () => void, target: cc.Component) {
@@ -97,10 +143,20 @@ export default class NetworkClient {
 
     close() {
         this.isForceClose = true;
+        this._reconnectAttempts = 0;
+        if (this._reconnectTimer) {
+            clearTimeout(this._reconnectTimer);
+            this._reconnectTimer = null;
+        }
         if (this.ws) {
             this.ws.close();
             this.ws = null;
         }
+    }
+
+    /** Reset reconnect counter (call when user re-enters a game) */
+    resetReconnect() {
+        this._reconnectAttempts = 0;
     }
 
     isConnected() {

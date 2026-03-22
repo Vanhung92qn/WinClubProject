@@ -212,33 +212,38 @@ public class PortalUtils {
         return new LoginResponse(false, "1001");
     }
 
-    private static final long KICK_TIMEOUT_MS = 5000;
+    private static final long KICK_TIMEOUT_MS = 3000;
 
+    /**
+     * Fire-and-forget: signal game servers to kick old session, then clean up.
+     * Does NOT block the login response — runs in a background thread.
+     */
     private static void kickSession(UserModel userModel) {
         String nickname = userModel.getNickname();
-        HazelcastInstance instance = HazelcastClientFactory.getInstance();
-
-        IMap<String, String> map = instance.getMap("LOGIN_OTHER_DEVICE_MAP");
-        map.put(nickname, nickname);
-
-        IQueue queue = instance.getQueue("LOGIN_OTHER_DEVICE_QUEUE");
-        if (queue != null) {
-            queue.offer(new KickUserSignal(nickname, KickUserSignal.DUPLICATE_LOGIN));
-        }
-
-        long deadline = System.currentTimeMillis() + KICK_TIMEOUT_MS;
-        while (map.containsKey(nickname)) {
-            if (System.currentTimeMillis() >= deadline) {
-                logger.debug("kickSession timeout (" + KICK_TIMEOUT_MS + "ms) for " + nickname + " — removing key and proceeding");
-                map.remove(nickname);
-                break;
-            }
+        new Thread(() -> {
             try {
-                Thread.sleep(50);
-            } catch (Exception ex) {
-                logger.error(ex.getMessage(), ex);
+                HazelcastInstance instance = HazelcastClientFactory.getInstance();
+                IMap<String, String> map = instance.getMap("LOGIN_OTHER_DEVICE_MAP");
+                map.put(nickname, nickname);
+
+                IQueue queue = instance.getQueue("LOGIN_OTHER_DEVICE_QUEUE");
+                if (queue != null) {
+                    queue.offer(new KickUserSignal(nickname, KickUserSignal.DUPLICATE_LOGIN));
+                }
+
+                long deadline = System.currentTimeMillis() + KICK_TIMEOUT_MS;
+                while (map.containsKey(nickname)) {
+                    if (System.currentTimeMillis() >= deadline) {
+                        logger.debug("kickSession timeout (" + KICK_TIMEOUT_MS + "ms) for " + nickname + " — auto-cleanup");
+                        map.remove(nickname);
+                        break;
+                    }
+                    Thread.sleep(100);
+                }
+            } catch (Exception e) {
+                logger.debug("kickSession async error for " + nickname + ": " + e.getMessage());
             }
-        }
+        }, "kick-" + nickname).start();
     }
 
     public static String getIpAddress(HttpServletRequest request) {
