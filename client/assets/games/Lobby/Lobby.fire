@@ -2785,9 +2785,6 @@
     "tabsListGame": {
       "__id__": 400
     },
-    "popupTransaction": {
-      "__uuid__": "ffc9987c-a4c3-449f-9b01-c8734385bdf4"
-    },
     "clipBgm": {
       "__uuid__": "f3577a81-eb8a-4137-a211-3d7f53190b87"
     },
@@ -2854,68 +2851,11 @@
     "nodeLobby": {
       "__id__": 2
     },
-    "popupProfile": {
-      "__uuid__": "f806a9a0-cdb3-458d-900a-a8d09a3659d2"
-    },
-    "popupShop": {
-      "__uuid__": "c6abd03d-9e4a-4882-b60b-3985b0569e93"
-    },
-    "prefabMailBox": {
-      "__uuid__": "092206fb-458b-4160-9430-c3b08b9602e4"
-    },
-    "prefabPopupCashOut": {
-      "__uuid__": "79bbcf85-febf-46f2-b455-27a0012fa335"
-    },
-    "prefabPopupCashOutTransaction": {
-      "__uuid__": "b50047fe-e74f-44b2-ae4d-315e1d19c00f"
-    },
-    "prefabPopupCashOutGuide": {
-      "__uuid__": "3378856f-2297-407e-b3a8-ddea75ccc9bd"
-    },
-    "prefabPopupEvent": {
-      "__uuid__": "0e225a3c-54f3-4202-be77-a2a470e4b02c"
-    },
-    "popupSecurity": {
-      "__uuid__": "88380026-6935-4413-b385-e1a86defe48d"
-    },
-    "prefabPopupForgetPassword": {
-      "__uuid__": "ad37c6e1-ae17-4013-8d7b-b8b4f9270297"
-    },
     "tagGameNode": {
       "__id__": 770
     },
     "nodeActivePhone": {
       "__id__": 114
-    },
-    "prefabPopupSetting": {
-      "__uuid__": "34a30dc8-7a38-4b0e-8198-3cc40f694c73"
-    },
-    "prefabPopupGiftCode": {
-      "__uuid__": "dd46ec07-5342-4e6e-b51c-0592b5520795"
-    },
-    "prefabPopupUpdateCashoutBank": {
-      "__uuid__": "b4193067-726c-4d77-b5e0-9cb52ac0ffab"
-    },
-    "prefabPopupChargeTransaction": {
-      "__uuid__": "a7609492-af3a-4f2c-9567-0e312848d17e"
-    },
-    "prefabPopupChargeGuide": {
-      "__uuid__": "3e50ab70-5636-4865-add8-5577d7c722ce"
-    },
-    "popupActiveTelegram": {
-      "__uuid__": "41b1e95a-637c-4ed6-a88c-9480cb2f6097"
-    },
-    "prefabPopupSafe": {
-      "__uuid__": "fff15949-458b-4c88-9aac-8f935b4ea3f2"
-    },
-    "prefabPopupTelegramGuide": {
-      "__uuid__": "a13e0cd1-bef9-43dd-b7e6-14168c502cdf"
-    },
-    "prefabPopupBigBanner": {
-      "__uuid__": "476c105f-f29a-43a9-a182-fb4e79829c7d"
-    },
-    "prefabPopupUpdateNickName": {
-      "__uuid__": "39560229-4ed0-410e-a56e-fbbc04bdc71c"
     },
     "nodeSupport": {
       "__id__": 121
