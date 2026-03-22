@@ -8,6 +8,7 @@ import BroadcastReceiver from "../../../../scripts/common/BroadcastReceiver";
 import Dialog from "../../../../scripts/common/Dialog";
 import LobbyLobbyController from "../controller/Lobby.LobbyController";
 import PopupProfile from "../Lobby.PopupProfile";
+import AuthService from "../../../../core/auth/AuthService";
 
 const {ccclass, property} = cc._decorator;
 
@@ -108,7 +109,7 @@ export default class PopupUserInformation extends cc.Component {
         App.instance.confirmDialog.show3("Bạn có muốn đăng xuất khỏi tài khoản?", "ĐĂNG XUẤT", (isConfirm) => {
             if (isConfirm) {
                 this.node.parent.parent.getComponent(Dialog).dismiss();
-                BroadcastReceiver.send(BroadcastReceiver.USER_LOGOUT);
+                AuthService.logout();
             }
         });
     }

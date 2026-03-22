@@ -187,8 +187,8 @@ export default class App extends cc.Component {
                 case cmd.Code.LOGIN_OTHER_DEVICE:
                     let res = new cmd.ResLoginOtherDevice(data);
                     let errorMessage = res.text;
-                    SPUtils.setUserName("");
-                    SPUtils.setUserPass("");
+                    SPUtils.clearCredentials();
+                    Configs.Login.clear();
                     MiniGameNetworkClient.getInstance().close();
                     TaiXiuNetWorkClient.getInstance().close();
                     TaiXiuMD5NetWorkClient.getInstance().close();

@@ -853,7 +853,9 @@ namespace Lobby {
         }
 
         actBack() {
+            console.log("[Lobby] actBack() called");
             App.instance.confirmDialog.show3("Bạn có muốn đăng xuất khỏi tài khoản?", "ĐĂNG XUẤT", (isConfirm) => {
+                console.log("[Lobby] confirm callback, isConfirm:", isConfirm);
                 if (isConfirm) {
                     AuthService.logout();
                 }
