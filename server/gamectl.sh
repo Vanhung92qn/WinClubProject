@@ -15,23 +15,23 @@ LOG_DIR="$BASE_DIR/logs"
 CONFIG_SHARED="$BASE_DIR/config-shared"
 mkdir -p "$LOG_DIR"
 
-# Game registry: name → jar_dir:jar_name:port
+# Game registry: name → dir:jar_name:main_class:port
 declare -A GAMES=(
-    [minigame]="game/Minigame:Minigame:1644"
-    [slot]="game/slot:slot:1844"
-    [taixiu]="game/taixiuMini:taixiuMini:2044"
-    [taixiumd5]="game/taixiuMd5:taixiuMd5:12044"
-    [taixiukubet]="game/taixiuKubet:taixiuKubet:22044"
-    [xocdia]="game/xocdia:xocdia:2344"
-    [xocdiakubet]="game/xocdiaKubet:xocdiaKubet:22344"
-    [bacay]="game/bacayServer:bacayServer:1044"
-    [baicao]="game/baicao:baicao:1144"
-    [binh]="game/binh:binh:1244"
-    [poker]="game/poker:poker:1744"
-    [sam]="game/sam:sam:1944"
-    [tlmn]="game/tlmn:tlmn:2144"
-    [baucua]="game/baucuato:baucuato:3644"
-    [lieng]="game/lieng:lieng:2244"
+    [minigame]="game/Minigame:Minigame:game.MiniGameMain:1644"
+    [slot]="game/slot:SlotMachine:game.SlotMain:1844"
+    [taixiu]="game/taixiuMini:taixiuMini:game.TaiXiuMiniGameMain:2044"
+    [taixiumd5]="game/taixiuMd5:taixiuMd5:game.TaiXiuMiniGameMain:12044"
+    [taixiukubet]="game/taixiuKubet:taixiuKubet:game.TaiXiuMiniGameMain:22044"
+    [xocdia]="game/xocdia:xocdia:game.xocdia.server.XocDiaMain:2344"
+    [xocdiakubet]="game/xocdiaKubet:xocdiaKubet:game.xocdia.server.XocDiaMain:22344"
+    [bacay]="game/bacayServer:bacayServer:game.bacay.server.BacayMain:1044"
+    [baicao]="game/baicao:baicao:game.baicao.server.BaiCaoMain:1144"
+    [binh]="game/binh:binh:game.binh.server.BinhMain:1244"
+    [poker]="game/poker:poker:game.poker.server.PokerMain:1744"
+    [sam]="game/sam:sam:game.sam.server.SamMain:1944"
+    [tlmn]="game/tlmn:tlmn:game.tienlen.server.TlmnMain:2144"
+    [baucua]="game/baucuato2:baucuato2:game.BauCuaTo2Main:3644"
+    [lieng]="game/lieng:lieng:game.lieng.server.LiengMain:1543"
 )
 
 # ── Colors ──
@@ -39,9 +39,10 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 
 get_game_info() {
     local info="${GAMES[$1]}"
-    IFS=':' read -r DIR JAR PORT <<< "$info"
+    IFS=':' read -r DIR JAR MAIN PORT <<< "$info"
     GAME_DIR="$BASE_DIR/$DIR"
     GAME_JAR="$JAR"
+    GAME_MAIN="$MAIN"
     GAME_PORT="$PORT"
 }
 
@@ -72,7 +73,7 @@ start_game() {
         cd "$GAME_DIR" || return 1
     fi
 
-    nohup java -cp "libs/*:build/libs/${GAME_JAR}.jar" game.${GAME_JAR^}GameMain \
+    nohup java -cp "libs/*:build/libs/${GAME_JAR}.jar" $GAME_MAIN \
         >> "$LOG_DIR/${name}.log" 2>&1 &
 
     # Wait for port

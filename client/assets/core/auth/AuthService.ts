@@ -97,9 +97,13 @@ export default class AuthService {
      * Logout — clear state + disconnect all game servers.
      */
     static logout(): void {
+        console.log("[AuthService] logout()");
         Configs.Login.clear();
-        SPUtils.setUserName("");
-        SPUtils.setUserPass("");
+        Configs.Login.IsLogin = false;
+
+        // Remove credentials from localStorage (not just set empty — removeItem guarantees deletion)
+        SPUtils.clearCredentials();
+        console.log("[AuthService] credentials cleared. getUserName:", JSON.stringify(SPUtils.getUserName()), "getUserPass:", JSON.stringify(SPUtils.getUserPass()));
 
         // Disconnect all game WebSocket connections
         MiniGameNetworkClient.getInstance().close();
@@ -144,14 +148,13 @@ export default class AuthService {
         SPUtils.setUserPass(password);
         SPUtils.setNickName(Configs.Login.Nickname);
 
-        // 3. Connect game server WebSockets
+        // 3. Connect game server WebSockets (essential ones only)
         MiniGameNetworkClient.getInstance().sendCheck(new cmd.ReqSubcribeJackpots());
         MiniGameNetworkClient.getInstance().sendCheck(new cmd.ReqGetSecurityInfo());
         SlotNetworkClient.getInstance().sendCheck(new cmd.ReqSubcribeHallSlot());
         TaiXiuNetWorkClient.getInstance().checkConnect(() => {});
-        ShootFishNetworkClient.getInstance().checkConnect(() => {
-            BroadcastReceiver.send(BroadcastReceiver.USER_UPDATE_COIN);
-        });
+        // ShootFish (banca) connects lazily when user enters the game — not on login
+        // This avoids infinite retry spam when banca .NET server is not running
 
         // 4. Show mini game button + notify UI
         App.instance.buttonMiniGame.show();

@@ -33,6 +33,17 @@ namespace common {
             cc.sys.localStorage.setItem(keyEncrypted, valueEncrypted);
         }
 
+        static remove(key: string) {
+            var keyEncrypted = "" + this.encode(key, 3265812);
+            cc.sys.localStorage.removeItem(keyEncrypted);
+        }
+
+        static clearCredentials() {
+            this.remove("username");
+            this.remove("userpass");
+            this.remove("nickname");
+        }
+
         static setNickName(value: string) {
             this.set("nickname", value);
         }

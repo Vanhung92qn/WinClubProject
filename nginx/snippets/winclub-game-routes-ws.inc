@@ -52,7 +52,7 @@
         proxy_read_timeout 86400s;
     }
     location /socket-client/lieng {
-        proxy_pass http://127.0.0.1:2244/websocket;
+        proxy_pass http://127.0.0.1:1543/websocket;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";

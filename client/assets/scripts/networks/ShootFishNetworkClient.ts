@@ -76,6 +76,11 @@ export default class ShootFishNetworkClient {
     private isLogined = false;
     private onLogined: (logined) => void = null;
 
+    // Reconnect backoff
+    private _reconnectAttempts: number = 0;
+    private _maxReconnectAttempts: number = 8;
+    private _reconnectTimer: any = null;
+
     public static getInstance(): ShootFishNetworkClient {
         if (this.instance == null) {
             this.instance = new ShootFishNetworkClient();
@@ -134,7 +139,8 @@ export default class ShootFishNetworkClient {
     }
 
     private onOpen(ev: Event) {
-        //   console.log("onOpen");
+        console.log("[WS-Fish] Connected: banca");
+        this._reconnectAttempts = 0;
         this.intervalPing = setInterval(() => this.ping(), 1500);
         this.timeoutInterval = setInterval(() => {
             this.timeout += 1;
@@ -212,9 +218,18 @@ export default class ShootFishNetworkClient {
             }
         }
         if (this.isAutoReconnect && !this.isForceClose) {
-            setTimeout(() => {
+            if (this._reconnectAttempts >= this._maxReconnectAttempts) {
+                console.warn("[WS-Fish] Max reconnect attempts reached, stopping");
+                return;
+            }
+            let delay = Math.min(2000 * Math.pow(2, this._reconnectAttempts), 30000);
+            this._reconnectAttempts++;
+            console.log(`[WS-Fish] Reconnect #${this._reconnectAttempts} in ${delay}ms`);
+            if (this._reconnectTimer) clearTimeout(this._reconnectTimer);
+            this._reconnectTimer = setTimeout(() => {
+                this._reconnectTimer = null;
                 if (!this.isForceClose) this.connect();
-            }, 2000);
+            }, delay);
         }
 
         if(this.isLogined) {
@@ -246,16 +261,22 @@ export default class ShootFishNetworkClient {
     }
 
     public connect() {
-        //    console.log("start connect: " + this.host + ":" + this.port);
         this.isForceClose = false;
-        if (this.ws == null) {
-            // this.ws = new WebSocket("wss://" + host + ":" + port + "/websocket");
-            // All traffic through Nginx: wss://DOMAIN/socket-client/{path}
-            let domain = Configs.App.DOMAIN;
-            if (domain.endsWith('/')) domain = domain.slice(0, -1);
-            let protocol = Configs.App.USE_WSS ? 'wss' : 'ws';
-            let url = `${protocol}://${domain}/socket-client/${this.host}`;
-            console.log(`[WS-Fish] Connecting: ${url}`);
+        // Prevent connect if already connecting or connected
+        if (this.ws != null) {
+            if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+                return;
+            }
+            this.ws.close();
+            this.ws = null;
+        }
+
+        let domain = Configs.App.DOMAIN;
+        if (domain.endsWith('/')) domain = domain.slice(0, -1);
+        let protocol = Configs.App.USE_WSS ? 'wss' : 'ws';
+        let url = `${protocol}://${domain}/socket-client/${this.host}`;
+        console.log(`[WS-Fish] Connecting: ${url}`);
+        try {
             if (Configs.App.USE_WSS && cc.sys.isNative && cc.sys.os == cc.sys.OS_ANDROID) {
                 this.ws = new (Function.prototype.bind.apply(WebSocket, [null, url, [], cc.url.raw("resources/raw/cacert.pem")]));
             } else {
@@ -266,12 +287,9 @@ export default class ShootFishNetworkClient {
             this.ws.onmessage = this.onMessage.bind(this);
             this.ws.onerror = this.onError.bind(this);
             this.ws.onclose = this.onClose.bind(this);
-        } else {
-            if (this.ws.readyState !== WebSocket.OPEN) {
-                this.ws.close();
-                this.ws = null;
-                this.connect();
-            }
+        } catch (e) {
+            console.error("[WS-Fish] Failed to create WebSocket:", e);
+            this.ws = null;
         }
     }
 
@@ -285,6 +303,8 @@ export default class ShootFishNetworkClient {
 
     public close() {
         this.isForceClose = true;
+        this._reconnectAttempts = 0;
+        if (this._reconnectTimer) { clearTimeout(this._reconnectTimer); this._reconnectTimer = null; }
         if (this.ws) {
             this.ws.close();
         }
