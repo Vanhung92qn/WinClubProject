@@ -4,6 +4,48 @@
 
 ## Changelog (gần đây)
 
+### 2026-03-22 — Kiến trúc Client: Lazy Loading + Tổ chức thư mục core/
+
+- **Refactor cấu trúc client:** Di chuyển files trong Cocos Creator Editor (kéo-thả để giữ UUID/.meta):
+  - `scripts/common/Http.ts` → `core/network/Http.ts`
+  - `scripts/common/PortalPassword.ts` → `core/auth/PortalPassword.ts`
+  - `scripts/common/PopupManager.ts` → `core/utils/PopupManager.ts`
+  - `games/Lobby/src/Lobby.LobbyController.ts` → `games/Lobby/src/controller/`
+  - 5 file UI → `games/Lobby/src/ui/`
+- **Fix 92+ imports trực tiếp:** Tất cả file import Http/PortalPassword/PopupManager đã update path mới. Không dùng bridge re-export.
+- **Fix LobbyController imports:** 16+ file trong `shop/`, `game/`, `event/`, `account/` update path đến `controller/Lobby.LobbyController`.
+- **Fix 3 sibling imports:** `App.ts`, `Configs.ts`, `Game.GetLeaderBoard.ts` trong `scripts/common/` update path `./Http` → `../../core/network/Http`.
+
+### 2026-03-22 — Loading tối ưu: loadDir('') → loadScene('Lobby')
+
+- **Trước:** `LoadingController.loadBundleLobby()` dùng `bundle.loadDir('')` tải ~40MB (tất cả textures, spine, audio, 25 prefabs) vào RAM trước khi vào Lobby.
+- **Sau:** `bundle.loadScene('Lobby')` chỉ tải scene + dependencies trực tiếp (~5-7MB). Popup prefabs lazy-load qua `PopupManager`.
+- **Files:** `LoadingController.ts`, `BundleControl.ts` (thêm `loadLobbyPrefab`, `releaseLobbyAsset`, `releaseGameBundle`).
+
+### 2026-03-22 — BCrypt thay MD5 cho password hashing
+
+- **Trước:** Password lưu MD5 32-char không salt → dễ rainbow-table attack.
+- **Sau:** BCrypt ($2a$10$...) 60-char với salt tự động. Server test không có user thật nên chuyển thẳng.
+- **Server changes:**
+  - `PasswordService.java` (MỚI): `decryptClientPassword()` (AES→plaintext), `hashPassword()` (BCrypt), `verifyPassword()` (hỗ trợ cả BCrypt lẫn legacy MD5), `isLegacyHash()`.
+  - `LoginProcessor.java`: Dùng `PasswordService.verifyPassword()` thay `equals()`. Auto-migrate MD5→BCrypt khi login thành công. Error handling: catch-all set "1001" thay vì giữ default "1009".
+  - `QuickRegisterProcessor.java`: Lưu BCrypt hash thay MD5.
+  - `UpdateNicknameProcesscor.java`: Dùng `PasswordService.verifyPassword()`. **Fix bug Java:** `errorCode == "0"` → `"0".equals(errorCode)` (reference vs value comparison).
+  - `build.gradle`: Thêm `org.mindrot:jbcrypt:0.4`.
+- **SQL migration:** `20260322_bcrypt_migration.sql` — expand `SP_Register._password` từ VARCHAR(45) lên VARCHAR(125), expand `update_user_info.p_new` từ NVARCHAR(100) lên NVARCHAR(125).
+- **Client:** `PopUplogin.ts` xóa method `md52()` trùng lặp, dùng `PortalPassword.forApi()` thống nhất.
+
+### 2026-03-22 — Fix Popup.ts crash (callback is not a function)
+
+- **Nguyên nhân:** `XocDiaLiveKub.PopupGuide.ts` gọi `super.runActionClose(returnValue)` truyền giá trị trả về thay vì callback function.
+- **Fix:** `Popup.ts:runActionClose()` thêm `typeof callback === 'function'` check trước khi gọi.
+
+### 2026-03-22 — Phân tích lỗi Login 1009 + Register "Mất kết nối"
+
+- **Error 1009:** Default error code trong `LoginProcessor` (line 66). Xảy ra khi exception trong login flow (DB/Hazelcast/NullPointer). Catch-all ở line 119 không set error code → giữ default 1009.
+- **Error "Mất kết nối" (1001) khi đăng ký:** `UpdateNicknameProcesscor` default error = 1001. Exception trong flow (Hazelcast/MongoDB) → catch-all không set code → trả 1001.
+- **Fix:** Cả hai processor giờ set `res.setErrorCode("1001")` trong catch block + log error chi tiết.
+
 ### 2026-03-21 — Login c=3 mã 1007 dù đúng mật khẩu (CryptoJS + khoảng trắng)
 
 - **Triệu chứng:** Client gửi `pw` mã hóa (AES+base64 lồng), server trả **1007**; cùng user gửi **MD5 32 ký tự** thì **đăng nhập được**.

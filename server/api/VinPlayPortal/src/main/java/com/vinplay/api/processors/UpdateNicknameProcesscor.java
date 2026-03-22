@@ -26,8 +26,8 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import com.vinplay.api.processors.cashout.GenCommentBank;
 import com.vinplay.api.processors.momo.ELKAutoBankNew;
+import com.vinplay.api.utils.PasswordService;
 import com.vinplay.api.utils.PortalUtils;
-import com.vinplay.api.utils.WebPasswordNormalizer;
 import com.vinplay.api.utils.SocialUtils;
 import com.vinplay.usercore.service.impl.UserServiceImpl;
 import com.vinplay.usercore.utils.GameCommon;
@@ -58,22 +58,19 @@ public class UpdateNicknameProcesscor
     public String execute(Param<HttpServletRequest> param) {
         HttpServletRequest request = (HttpServletRequest) param.get();
         String username = request.getParameter("un");
-        String password = request.getParameter("pw");
-        try {
-            password = WebPasswordNormalizer.toStoredPasswordHash(password);
-        } catch (Exception e) {
-            logger.debug((Object) ("updateNickname password normalize: " + e.getMessage()));
-        }
+        String encryptedPw = request.getParameter("pw");
+        // Decrypt AES → plaintext for BCrypt verification
+        String plainPassword = PasswordService.decryptClientPassword(encryptedPw);
         String nickname = request.getParameter("nn");
         String social = request.getParameter("s");
         String accessToken = request.getParameter("at");
-        logger.debug((Object) ("Request updateNickname: username: " + username + ", password: " + password + ", social: " + social + ", accessToken: " + accessToken + ", nickname: " + nickname));
+        logger.debug((Object) ("Request updateNickname: username: " + username + ", social: " + social + ", accessToken: " + accessToken + ", nickname: " + nickname));
 //        loadChatUsers();
 //        if (listChatUsers.contains(nickname)) {
 //            LoginResponse res = new LoginResponse(false, "1010");
 //            return res.toJson();
 //        }
-        if ((username != null && password != null || social != null && (social.equals("fb") || social.equals("gg")) && accessToken != null) && nickname != null) {
+        if ((username != null && plainPassword != null || social != null && (social.equals("fb") || social.equals("gg")) && accessToken != null) && nickname != null) {
             LoginResponse res = new LoginResponse(false, "1001");
             try {
                 int statusGame = GameCommon.getValueInt((String) "STATUS_GAME");
@@ -108,7 +105,7 @@ public class UpdateNicknameProcesscor
                                 if (!userModel.isBanLogin()) {
                                     if (userModel.getNickname() == null || userModel.getNickname().isEmpty()) {
                                         String errorCode = userService.updateNickname(userModel.getId(), nickname);
-                                        if (errorCode == "0") {
+                                        if ("0".equals(errorCode)) {
                                             SocialUtils.socialSuccess((IMap<String, SocialModel>) socialMap, socialId, accessToken);
                                             userModel.setNickname(nickname);
 //                                            userService.updateNickNameUser(userModel.getId(), nickname);
@@ -146,10 +143,10 @@ public class UpdateNicknameProcesscor
                                 }
                                 if (!userModel2.isBanLogin()) {
                                     if (!userModel2.getUsername().toLowerCase().equals(nickname.toLowerCase())) {
-                                        if (userModel2.getPassword().equals(password)) {
+                                        if (PasswordService.verifyPassword(plainPassword, userModel2.getPassword())) {
                                             if (userModel2.getNickname() == null || userModel2.getNickname().isEmpty()) {
                                                 String errorCode2 = userService.updateNickname(userModel2.getId(), nickname);
-                                                if (errorCode2 == "0") {
+                                                if ("0".equals(errorCode2)) {
                                                     userModel2.setNickname(nickname);
                                                     userService.updateNickNameUser(userModel2.getId(), nickname);
                                                     res = PortalUtils.loginSuccess(userModel2, request);
@@ -180,7 +177,8 @@ public class UpdateNicknameProcesscor
                     res.setErrorCode("106");
                 }
             } catch (Exception e) {
-                logger.debug((Object) e);
+                logger.error("UpdateNickname exception for user " + username + ": " + e.getMessage(), e);
+                res.setErrorCode("1001");
             }
             logger.debug((Object) ("Response updateNickname: " + res.toJson()));
             return res.toJson();

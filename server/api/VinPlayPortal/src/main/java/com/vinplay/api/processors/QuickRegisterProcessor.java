@@ -20,8 +20,8 @@
  */
 package com.vinplay.api.processors;
 
+import com.vinplay.api.utils.PasswordService;
 import com.vinplay.api.utils.PortalUtils;
-import com.vinplay.api.utils.WebPasswordNormalizer;
 import com.vinplay.marketing.MARKETING_KEYWORD;
 import com.vinplay.marketing.entity.Agency;
 import com.vinplay.marketing.entity.UTMTracking;
@@ -57,12 +57,10 @@ public class QuickRegisterProcessor
         {
             HttpServletRequest request = (HttpServletRequest) param.get();
             String username = request.getParameter("un");
-            String password = request.getParameter("pw");
-            try {
-                password = WebPasswordNormalizer.toStoredPasswordHash(password);
-            } catch (Exception e) {
-                logger.debug((Object) ("quickRegister password normalize: " + e.getMessage()));
-            }
+            String encryptedPw = request.getParameter("pw");
+            // Decrypt AES → plaintext → BCrypt hash for storage
+            String plainPassword = PasswordService.decryptClientPassword(encryptedPw);
+            String password = PasswordService.hashPassword(plainPassword);
             //   String captcha = request.getParameter("cp");
             //   String captchaId = request.getParameter("cid");
             String nickname = request.getParameter("nn");

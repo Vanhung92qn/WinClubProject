@@ -22,10 +22,11 @@
 package com.vinplay.api.processors;
 
 import bitzero.util.common.business.Debug;
+import com.vinplay.api.utils.PasswordService;
 import com.vinplay.api.utils.PortalUtils;
-import com.vinplay.api.utils.WebPasswordNormalizer;
 import com.vinplay.marketing.entity.MarketingUser;
 import com.vinplay.marketing.service.MarketingService;
+import com.vinplay.usercore.dao.impl.SecurityDaoImpl;
 import com.vinplay.usercore.service.CacheService;
 import com.vinplay.usercore.service.OtpService;
 import com.vinplay.usercore.service.impl.CacheServiceImpl;
@@ -50,19 +51,17 @@ public class LoginProcessor
     public String execute(Param<HttpServletRequest> param) {
         HttpServletRequest request = (HttpServletRequest) param.get();
         String username = request.getParameter("un");
-        String password = request.getParameter("pw");
+        String encryptedPw = request.getParameter("pw");
         String platform = request.getParameter("pf");
-        try {
-            password = WebPasswordNormalizer.toStoredPasswordHash(password);
-        } catch (Exception e) {
-            logger.debug((Object) ("login password normalize: " + e.getMessage()));
-        }
+
+        // Decrypt AES-encrypted password from client → plaintext
+        String plainPassword = PasswordService.decryptClientPassword(encryptedPw);
+
         String social = request.getParameter("s");
         String accessToken = request.getParameter("at");
         String cp = request.getParameter("cp");
-        request.getHeader("user-agent");
-        logger.debug((Object) ("Request login: username: " + username + ", password: " + password + ", social: " + social + ", accessToken: " + accessToken));
-        if (username != null && password != null || social != null && (social.equals("fb") || social.equals("gg")) && accessToken != null) {
+        logger.debug((Object) ("Request login: username: " + username + ", social: " + social));
+        if (username != null && plainPassword != null || social != null && (social.equals("fb") || social.equals("gg")) && accessToken != null) {
             LoginResponse res = new LoginResponse(false, "1009");
             if (username == null || username.length() > 20 || username.length() < 6) {
                 return res.toJson();
@@ -86,10 +85,22 @@ public class LoginProcessor
                     }
 
                     if (!userModel2.isBanLogin()) {
-                        if (userModel2.getPassword().equals(password)) {
+                        // BCrypt verification (also supports legacy MD5 hashes)
+                        if (PasswordService.verifyPassword(plainPassword, userModel2.getPassword())) {
+                            // Auto-migrate legacy MD5 → BCrypt on successful login
+                            if (PasswordService.isLegacyHash(userModel2.getPassword())) {
+                                try {
+                                    String bcryptHash = PasswordService.hashPassword(plainPassword);
+                                    SecurityDaoImpl secDao = new SecurityDaoImpl();
+                                    secDao.updateUserInfo(userModel2.getId(), bcryptHash, 2);
+                                    logger.debug("Migrated password to BCrypt for user: " + username);
+                                } catch (Exception migErr) {
+                                    logger.debug("BCrypt migration failed (non-blocking): " + migErr.getMessage());
+                                }
+                            }
+
                             if (userModel2.getNickname() != null && !userModel2.getNickname().trim().isEmpty()) {
                                 if (userModel2.isHasLoginSecurity() && userModel2.getLoginOtp() >= 0L && userModel2.getLoginOtp() <= userModel2.getVinTotal()) {
-                                    // send otp
                                     OtpService otpService = new OtpServiceImpl();
                                     int ret = otpService.sendVoiceOtp(userModel2.getNickname(), "", true);
                                     if (ret != 0) {
@@ -100,7 +111,6 @@ public class LoginProcessor
                                     res.setErrorCode("1012");
                                 } else {
                                     res = PortalUtils.loginSuccess(userModel2, request);
-                                    // marketing
                                     marketing(res, userModel2.getUsername());
                                 }
                             } else {
@@ -110,14 +120,14 @@ public class LoginProcessor
                             res.setErrorCode("1007");
                         }
                     } else {
-                        res.setErrorCode("Tài khoản đã bị khóa.");
+                        res.setErrorCode("1109");
                     }
                 } else {
                     res.setErrorCode("1007");
                 }
-//                }
             } catch (Exception e1) {
-                logger.info((Object) e1);
+                logger.error("Login exception for user " + username + ": " + e1.getMessage(), e1);
+                res.setErrorCode("1001");
             }
             logger.debug((Object) ("Response login: " + res.toJson()));
             return res.toJson();

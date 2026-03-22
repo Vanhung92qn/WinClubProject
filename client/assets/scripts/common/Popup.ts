@@ -30,14 +30,14 @@ export default class Popup extends cc.Component {
         ));
     }
 
-    runActionClose(callback = null) {
+    runActionClose(callback: Function = null) {
         this.node.getChildByName('Container').runAction(
             cc.sequence(
                 cc.scaleTo(.06, 1.2),
                 cc.scaleTo(.27, 0),
                 cc.callFunc(() => {
                     this.node.destroy();
-                    if(callback) {
+                    if(callback && typeof callback === 'function') {
                         callback();
                     }
                 })

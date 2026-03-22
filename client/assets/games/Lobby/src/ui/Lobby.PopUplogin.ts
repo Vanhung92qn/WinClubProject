@@ -12,6 +12,7 @@ import LobbyLobbyController from "../controller/Lobby.LobbyController";
 import Popup from "../../../../scripts/common/Popup";
 import Utils from "../../../../scripts/common/Utils";
 import GameErrorMessage from "../../../../scripts/enum/GameErrorMessage";
+import PortalPassword from "../../../../core/auth/PortalPassword";
 
 const {ccclass, property} = cc._decorator;
 var countIdx = 0;
@@ -27,13 +28,7 @@ export  class PopupLogin extends Popup {
     @property(cc.Prefab)
     prefabPopupUpdateNickName = null;
 
-     md52(message = '', key = ''){
-        let m = CryptoJS.AES.encrypt(message, key);
-          return base64.encode (m.toString());
-    }
-
     actLogin(): void {
-        // console.log("actLogin");
         let _this = this;
         let username = this.edbUsername.string.trim();
         let password = this.edbPassword.string.trim();
@@ -49,7 +44,7 @@ export  class PopupLogin extends Popup {
         }
 
         App.instance.showLoading2(true);
-        Http.get(Configs.App.API, { c: 3, un: username, pw: this.md52(password,"12345"), pf: Utils.getPlatform(), countIdx: countIdx}, (err, res) => {
+        Http.get(Configs.App.API, { c: 3, un: username, pw: PortalPassword.forApi(password), pf: Utils.getPlatform(), countIdx: countIdx}, (err, res) => {
             countIdx++;
             App.instance.showLoading2(false);
             if (err != null) {
