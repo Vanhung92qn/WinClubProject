@@ -35,6 +35,12 @@
 - **SQL migration:** `20260322_bcrypt_migration.sql` — expand `SP_Register._password` từ VARCHAR(45) lên VARCHAR(125), expand `update_user_info.p_new` từ NVARCHAR(100) lên NVARCHAR(125).
 - **Client:** `PopUplogin.ts` xóa method `md52()` trùng lặp, dùng `PortalPassword.forApi()` thống nhất.
 
+### 2026-03-22 — Phase 3 Server + Phase 4 API Docs
+
+- **Centralized config:** 60 config files (db_pool, mongo, rmq, hazelcast) across 15 game servers → symlinked to `server/config-shared/`. Đổi DB password = sửa 1 file.
+- **gamectl.sh:** Unified script: `./gamectl.sh status|start|stop|restart|sync-config [game|all]`. Hiển thị trạng thái tất cả 15 game + 3 API servers.
+- **API.md:** Document 60+ Portal API endpoints (command IDs, params, error codes, WebSocket game paths).
+
 ### 2026-03-22 — Phase 3B: AuthService + Phase 3C: Game Bundle Lifecycle
 
 - **AuthService.ts** (MỚI tại `core/auth/AuthService.ts`):
