@@ -1,14 +1,14 @@
-import Dialog from "../../../scripts/common/Dialog";
-import Http from "../../../scripts/common/Http";
-import Configs from "../../../scripts/common/Configs";
-import App from "../../../scripts/common/App";
-import Utils from "../../../scripts/common/Utils";
-import BroadcastReceiver from "../../../scripts/common/BroadcastReceiver";
-import utils from "../../../scripts/common/Utils";
-import Popup from "../../../scripts/common/Popup";
-import GameErrorMessage from "../../../scripts/enum/GameErrorMessage";
-import ApiIDEnum from "./enum/ApiIDEnum";
-import PortalPassword from "../../../scripts/common/PortalPassword";
+import Dialog from "../../../../scripts/common/Dialog";
+import Http from "../../../../core/network/Http";
+import Configs from "../../../../scripts/common/Configs";
+import App from "../../../../scripts/common/App";
+import Utils from "../../../../scripts/common/Utils";
+import BroadcastReceiver from "../../../../scripts/common/BroadcastReceiver";
+import utils from "../../../../scripts/common/Utils";
+import Popup from "../../../../scripts/common/Popup";
+import GameErrorMessage from "../../../../scripts/enum/GameErrorMessage";
+import ApiIDEnum from "../enum/ApiIDEnum";
+import PortalPassword from "../../../../core/auth/PortalPassword";
 
 const {ccclass, property} = cc._decorator;
 

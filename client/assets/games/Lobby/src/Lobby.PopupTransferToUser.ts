@@ -6,7 +6,7 @@ import Configs from "../../../scripts/common/Configs";
 import App from "../../../scripts/common/App";
 import Utils from "../../../scripts/common/Utils";
 import BroadcastReceiver from "../../../scripts/common/BroadcastReceiver";
-import Http from "../../../scripts/common/Http";
+import Http from "../../../core/network/Http";
 import SPUtils from "../../../scripts/common/SPUtils";
 import PopupSecurityPhone from "./Lobby.PopupSecurityPhone";
 

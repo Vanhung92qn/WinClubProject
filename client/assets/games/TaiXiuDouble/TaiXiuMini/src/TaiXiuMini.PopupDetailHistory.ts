@@ -1,6 +1,6 @@
 import Dialog from "../../../../scripts/common/Dialog";
 import Utils from "../../../../scripts/common/Utils";
-import Http from "../../../../scripts/common/Http";
+import Http from "../../../../core/network/Http";
 import Configs from "../../../../scripts/common/Configs";
 import TaiXiuMiniController from "./TaiXiuMini.TaiXiuMiniController";
 

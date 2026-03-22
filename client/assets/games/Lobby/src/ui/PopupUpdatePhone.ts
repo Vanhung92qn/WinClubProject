@@ -1,17 +1,17 @@
-import Dialog from "../../../scripts/common/Dialog";
-import App from "../../../scripts/common/App";
-import Http from "../../../scripts/common/Http";
-import Configs from "../../../scripts/common/Configs";
-import BroadcastReceiver from "../../../scripts/common/BroadcastReceiver";
-import MiniGameNetworkClient from "../../../scripts/networks/MiniGameNetworkClient";
-import cmd from "../../../scripts/common/Lobby.Cmd";
-import SlotNetworkClient from "../../../scripts/networks/SlotNetworkClient";
-import ShootFishNetworkClient from "../../../scripts/networks/ShootFishNetworkClient";
-import SPUtils from "../../../scripts/common/SPUtils";
-import PopupUpdateNickname from "./PopupUpdateNickname";
+import Dialog from "../../../../scripts/common/Dialog";
+import App from "../../../../scripts/common/App";
+import Http from "../../../../core/network/Http";
+import Configs from "../../../../scripts/common/Configs";
+import BroadcastReceiver from "../../../../scripts/common/BroadcastReceiver";
+import MiniGameNetworkClient from "../../../../scripts/networks/MiniGameNetworkClient";
+import cmd from "../../../../scripts/common/Lobby.Cmd";
+import SlotNetworkClient from "../../../../scripts/networks/SlotNetworkClient";
+import ShootFishNetworkClient from "../../../../scripts/networks/ShootFishNetworkClient";
+import SPUtils from "../../../../scripts/common/SPUtils";
+import PopupUpdateNickname from "../PopupUpdateNickname";
 import PopupUpdateNicknameSunwin from "./PopupUpdateNicknameSunwin";
 import lobbyPopUploginV2 from "./Lobby.PopUploginV2";
-import utils from "../../../scripts/common/Utils";
+import utils from "../../../../scripts/common/Utils";
 
 
 const { ccclass, property } = cc._decorator;

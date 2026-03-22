@@ -1,9 +1,9 @@
 import App from "../../../../../scripts/common/App";
-import Http from "../../../../../scripts/common/Http";
+import Http from "../../../../../core/network/Http";
 import Configs from "../../../../../scripts/common/Configs";
 import ApiIDEnum from "../../enum/ApiIDEnum";
 import MailBoxItem from "./MailBoxItem";
-import LobbyLobbyController from "../../Lobby.LobbyController";
+import LobbyLobbyController from "../../controller/Lobby.LobbyController";
 import Utils from "../../../../../scripts/common/Utils";
 import GameSuccessMessage from "../../../../../scripts/enum/GameSuccessMessage";
 

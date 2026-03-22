@@ -1,5 +1,5 @@
 import Configs from "../../../scripts/common/Configs";
-import Http from "../../../scripts/common/Http";
+import Http from "../../../core/network/Http";
 import XocDiaLiveKubHistoryItem from "./XocDiaLiveKub.HistoryItem";
 import Popup from "../../../scripts/common/Popup";
 import XocDiaLiveKubController from "./XocDiaLiveKub.XocDiaController";

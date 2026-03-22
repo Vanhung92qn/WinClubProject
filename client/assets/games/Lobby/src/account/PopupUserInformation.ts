@@ -6,7 +6,7 @@ import Utils from "../../../../scripts/common/Utils";
 import Configs from "../../../../scripts/common/Configs";
 import BroadcastReceiver from "../../../../scripts/common/BroadcastReceiver";
 import Dialog from "../../../../scripts/common/Dialog";
-import LobbyLobbyController from "../Lobby.LobbyController";
+import LobbyLobbyController from "../controller/Lobby.LobbyController";
 import PopupProfile from "../Lobby.PopupProfile";
 
 const {ccclass, property} = cc._decorator;

@@ -1,5 +1,5 @@
 import Popup from "../../../scripts/common/Popup";
-import Http from "../../../scripts/common/Http";
+import Http from "../../../core/network/Http";
 import Configs from "../../../scripts/common/Configs";
 import App from "../../../scripts/common/App";
 import Utils from "../../../scripts/common/Utils";

@@ -1,6 +1,6 @@
 import Dialog from "../../../scripts/common/Dialog";
 import Utils from "../../../scripts/common/Utils";
-import Http from "../../../scripts/common/Http";
+import Http from "../../../core/network/Http";
 import Configs from "../../../scripts/common/Configs";
 import TaiXiuMD5Controller from "./TaiXiuMD5.TaiXiuMD5Controller";
 import App from "../../../scripts/common/App";

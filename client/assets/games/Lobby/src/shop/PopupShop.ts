@@ -1,5 +1,5 @@
 import ShopTabEnum from "../enum/ShopTabEnum";
-import LobbyLobbyController from "../Lobby.LobbyController";
+import LobbyLobbyController from "../controller/Lobby.LobbyController";
 
 const {ccclass, property} = cc._decorator;
 

@@ -8,7 +8,7 @@ import App from "../../../scripts/common/App";
 import TaiXiuKuBetNetWorkClient from "../../../scripts/networks/TaiXiuKuBetNetWorkClient";
 import nodeUtils from "../../../scripts/common/NodeUtils";
 import GameConfigManager from "../../../scripts/common/game/GameConfigManager";
-import Http from "../../../scripts/common/Http";
+import Http from "../../../core/network/Http";
 import ApiIDEnum from "../../Lobby/src/enum/ApiIDEnum";
 
 const {ccclass, property} = cc._decorator;

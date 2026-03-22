@@ -1,5 +1,5 @@
 import nodeUtils from "../../../scripts/common/NodeUtils";
-import Http from "../../../scripts/common/Http";
+import Http from "../../../core/network/Http";
 import Configs from "../../../scripts/common/Configs";
 import App from "../../../scripts/common/App";
 import Play from "./XocDia.Play";

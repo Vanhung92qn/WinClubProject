@@ -1,4 +1,4 @@
-import LobbyLobbyController from "../../Lobby.LobbyController";
+import LobbyLobbyController from "../../controller/Lobby.LobbyController";
 import Popup from "../../../../../scripts/common/Popup";
 import ShopTabEnum from "../../enum/ShopTabEnum";
 import EventTabEnum from "../../enum/EventTabEnum";

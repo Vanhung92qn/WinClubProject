@@ -1,6 +1,6 @@
-import Configs from "./Configs";
-import VersionConfig from "./VersionConfig";
-import App from "./App";
+import Configs from "../../scripts/common/Configs";
+import VersionConfig from "../../scripts/common/VersionConfig";
+import App from "../../scripts/common/App";
 
 const { ccclass, property } = cc._decorator;
 

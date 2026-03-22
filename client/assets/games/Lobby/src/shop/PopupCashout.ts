@@ -1,5 +1,5 @@
 import ShopTabEnum from "../enum/ShopTabEnum";
-import LobbyLobbyController from "../Lobby.LobbyController";
+import LobbyLobbyController from "../controller/Lobby.LobbyController";
 import Configs from "../../../../scripts/common/Configs";
 import MiniGameNetworkClient from "../../../../scripts/networks/MiniGameNetworkClient";
 import InPacket from "../../../../scripts/networks/Network.InPacket";

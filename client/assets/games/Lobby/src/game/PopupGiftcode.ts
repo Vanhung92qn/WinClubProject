@@ -4,8 +4,8 @@ import cmd from "../../../../scripts/common/Lobby.Cmd";
 import App from "../../../../scripts/common/App";
 import Configs from "../../../../scripts/common/Configs";
 import BroadcastReceiver from "../../../../scripts/common/BroadcastReceiver";
-import LobbyLobbyController from "../Lobby.LobbyController";
-import Http from "../../../../scripts/common/Http";
+import LobbyLobbyController from "../controller/Lobby.LobbyController";
+import Http from "../../../../core/network/Http";
 import GameURL from "../../../../scripts/common/game/GameURL";
 import ApiIDEnum from "../enum/ApiIDEnum";
 

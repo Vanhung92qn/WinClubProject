@@ -6,7 +6,7 @@ import cmd from "../../../scripts/common/Lobby.Cmd";
 import BroadcastReceiver from "../../../scripts/common/BroadcastReceiver";
 import Configs from "../../../scripts/common/Configs";
 import PopupSecurityPhone from "./Lobby.PopupSecurityPhone";
-import Http from "../../../scripts/common/Http";
+import Http from "../../../core/network/Http";
 import SPUtils from "../../../scripts/common/SPUtils";
 const { ccclass, property } = cc._decorator;
 

@@ -1,4 +1,4 @@
-import LobbyLobbyController from "../Lobby.LobbyController";
+import LobbyLobbyController from "../controller/Lobby.LobbyController";
 import Configs from "../../../../scripts/common/Configs";
 import App from "../../../../scripts/common/App";
 import GameErrorMessage from "../../../../scripts/enum/GameErrorMessage";

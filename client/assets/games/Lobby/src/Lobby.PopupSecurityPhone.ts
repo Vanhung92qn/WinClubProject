@@ -4,7 +4,7 @@ import InPacket from "../../../scripts/networks/Network.InPacket";
 import cmd from "../../../scripts/common/Lobby.Cmd";
 import App from "../../../scripts/common/App";
 import SPUtils from "../../../scripts/common/SPUtils";
-import Http from "../../../scripts/common/Http";
+import Http from "../../../core/network/Http";
 import utils from "../../../scripts/common/Utils";
 import BroadcastReceiver from "../../../scripts/common/BroadcastReceiver";
 import ApiIDEnum from "./enum/ApiIDEnum";

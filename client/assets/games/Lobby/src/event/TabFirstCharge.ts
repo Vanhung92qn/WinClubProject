@@ -2,7 +2,7 @@ import Configs from "../../../../scripts/common/Configs";
 import App from "../../../../scripts/common/App";
 import GameErrorMessage from "../../../../scripts/enum/GameErrorMessage";
 import ShopTabEnum from "../enum/ShopTabEnum";
-import LobbyLobbyController from "../Lobby.LobbyController";
+import LobbyLobbyController from "../controller/Lobby.LobbyController";
 import PopupEvent from "../account/event/PopupEvent";
 import GameURL from "../../../../scripts/common/game/GameURL";
 

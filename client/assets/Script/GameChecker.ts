@@ -1,5 +1,5 @@
 import Configs from "../scripts/common/Configs";
-import Http from "../scripts/common/Http";
+import Http from "../core/network/Http";
 import Utils from "../scripts/common/Utils";
 import VersionConfig from "../scripts/common/VersionConfig";
 

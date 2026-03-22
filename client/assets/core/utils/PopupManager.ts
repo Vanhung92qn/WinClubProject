@@ -1,5 +1,5 @@
-import App from "./App";
-import BundleControl from "./BundleControl";
+import App from "../../scripts/common/App";
+import BundleControl from "../../scripts/common/BundleControl";
 
 /**
  * Popup loading tier:

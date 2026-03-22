@@ -8,7 +8,7 @@ import App from "../../../scripts/common/App";
 import PopupProfile from "./Lobby.PopupProfile";
 import nodeUtils from "../../../scripts/common/NodeUtils";
 import utils from "../../../scripts/common/Utils";
-import LobbyLobbyController from "./Lobby.LobbyController";
+import LobbyLobbyController from "./controller/Lobby.LobbyController";
 
 const { ccclass, property } = cc._decorator;
 

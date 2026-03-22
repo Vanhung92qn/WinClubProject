@@ -1,4 +1,4 @@
-import LobbyLobbyController from "../../Lobby.LobbyController";
+import LobbyLobbyController from "../../controller/Lobby.LobbyController";
 import Popup from "../../../../../scripts/common/Popup";
 
 const {ccclass, property} = cc._decorator;

@@ -1,6 +1,6 @@
 import App from "../../../scripts/common/App";
 import Configs from "../../../scripts/common/Configs";
-import Http from "../../../scripts/common/Http";
+import Http from "../../../core/network/Http";
 import XocDiaHonorItem from "./XocDia.HonorItem";
 import XocDiaHistoryItem from "./XocDia.HistoryItem";
 import Popup from "../../../scripts/common/Popup";

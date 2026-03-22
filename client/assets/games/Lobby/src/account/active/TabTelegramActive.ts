@@ -1,6 +1,6 @@
 import App from "../../../../../scripts/common/App";
 import Configs from "../../../../../scripts/common/Configs";
-import Http from "../../../../../scripts/common/Http";
+import Http from "../../../../../core/network/Http";
 import ApiIDEnum from "../../enum/ApiIDEnum";
 import MiniGameNetworkClient from "../../../../../scripts/networks/MiniGameNetworkClient";
 import cmd from "../../../../../scripts/common/Lobby.Cmd";
@@ -9,7 +9,7 @@ import Utils from "../../../../../scripts/common/Utils";
 import Tween from "../../../../../scripts/common/Tween";
 import BroadcastReceiver from "../../../../../scripts/common/BroadcastReceiver";
 import GameURL from "../../../../../scripts/common/game/GameURL";
-import LobbyLobbyController from "../../Lobby.LobbyController";
+import LobbyLobbyController from "../../controller/Lobby.LobbyController";
 
 const {ccclass, property} = cc._decorator;
 
