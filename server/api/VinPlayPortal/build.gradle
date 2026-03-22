@@ -1,0 +1,44 @@
+plugins {
+    id 'java'
+}
+
+group 'com.vingame'
+version ''
+
+sourceCompatibility = 1.8
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'javax.jws:javax.jws-api:1.1'
+    implementation 'javax.xml.ws:jaxws-api:2.3.1'
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+    implementation 'com.sun.xml.ws:jaxws-rt:2.3.3'
+    implementation group: 'org.telegram', name: 'telegrambots', version: '6.9.7.1'
+    implementation group: 'com.maxmind.geoip2', name: 'geoip2', version: '4.2.0'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile project(':VinPlayUserCore')
+    compile project(':VinPlayDAL')
+    compile project(':BitzeroAll')
+    compile project(':CardCoreLib')
+    compile fileTree(include: ['*.jar'], dir: '../../libs')
+}
+task copyJar(type: Copy) {
+    from configurations.compile {
+        include  'VinPlayUserCore*.jar',  "VinPlayDAL*.jar" , "BitzeroAll*.jar", "CardCoreLib*.jar"
+    }
+    into 'libs/'
+}
+
+task copylibs(type: Copy) {
+    from '../../libs'
+    into 'libs'
+}
+
+copylibs.dependsOn copyJar
+build.dependsOn copylibs
+

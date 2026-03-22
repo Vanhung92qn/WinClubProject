@@ -1,0 +1,26 @@
+# Cursor Agent Rules & Project Master Context
+
+## 1. Project Identity & Architecture
+- **Name:** WinClub (Game Portal)
+- **Stack:** 
+  - Backend: Java (BitZero Engine, Jetty) - `server`
+  - Frontend: Cocos Creator (TypeScript) - `client`
+  - Infra: Docker (MySQL, MongoDB, Redis, RabbitMQ, Hazelcast)
+  - Relay: Python Playwright (Sniffing Live Casino Data)
+- **Architecture Principle:** Microservices backend, decoupled data processing, modular asset bundle frontend.
+
+## 2. Agent Operational Rules (CRITICAL)
+- **THINK BEFORE CODING:** Always analyze `./docs/ARCHITECTURE.md` and `./docs/MEMORY.md` before making any structural changes to understand the current context.
+- **NO DESTRUCTIVE ASSUMPTIONS:** If a dependency or configuration is missing, ask the User. Do not silently guess and break the production environment.
+- **DOCUMENT AS YOU GO:** Any time a new feature is added, a bug is fixed, or architecture is changed, you MUST update `./docs/MEMORY.md` (Changelog & Context) immediately so future Agents do not lose track.
+- **USER DELEGATION:** You have full shell access. If a task requires SUDO passwords, web-based UI clicks, or sensitive API keys, pause execution and output clear instructions for the User to perform the manual step.
+
+## 3. Git Workflow (Strict Enforcement)
+- **Rule:** Never modify files if the working tree is dirty with unrelated changes. 
+- Remind the user to commit or stash before starting a new feature. 
+- Write descriptive conventional commits (e.g., `feat: setup python relay script`, `refactor: split baucua into asset bundle`).
+
+## 4. Specific Domain Rules
+- **Backend (Java):** Use modern Java conventions. Avoid old `HttpURLConnection` for scraping. All live game data MUST be ingested via Python Relay JSON files, NOT direct Java HTTP connections.
+- **Frontend (Cocos):** Strict Modularization. Do NOT use monolithic heavy loading. Implement `cc.assetManager.loadBundle`. All UI components must handle disconnected states gracefully.
+- **Infrastructure:** All passwords, ports, and keys MUST be read from `.env` files. NO HARDCODING in `docker-compose.yml` or `.java` files.

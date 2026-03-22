@@ -1,0 +1,46 @@
+version: '3.0'
+services:
+  game_adp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: 'bancodegame/cms_adp'
+    environment:
+      # in production, recommend to use domain
+      - BASE_URL=http://20.244.8.116:3002/
+      - API_URL=http://10.5.0.9:8081/api
+      - API_BACKEND=http://10.5.0.10:8082/api_backend
+      - WEB_SOCKET=ws://20.244.8.116:7777/
+      - TAI_XIU_KUBET_IFRAME_URL=http://20.244.8.116/taixiu.html
+      - XOC_DIA_KUBET_IFRAME_URL=http://20.244.8.116/xocdia.html
+      
+      # Vinplay Admin Database
+      - DB_HOST_VINPLAY_ADMIN=10.5.0.2
+      - DB_PORT_VINPLAY_ADMIN=3306
+      - DB_USER_VINPLAY_ADMIN=root
+      - DB_PASS_VINPLAY_ADMIN=0Db20H9CP6T4jRNBB70bVTrf5o7IG9
+      - DB_NAME_VINPLAY_ADMIN=vinplay_admin
+
+      # Vinplay Database
+      - DB_HOST_VINPLAY=10.5.0.2
+      - DB_PORT_VINPLAY=3306
+      - DB_USER_VINPLAY=root
+      - DB_PASS_VINPLAY=0Db20H9CP6T4jRNBB70bVTrf5o7IG9
+      - DB_NAME_VINPLAY=vinplay
+
+      # Minigame Database
+      - DB_HOST_MINIGAME=10.5.0.2
+      - DB_PORT_MINIGAME=3306
+      - DB_USER_MINIGAME=root
+      - DB_PASS_MINIGAME=0Db20H9CP6T4jRNBB70bVTrf5o7IG9
+      - DB_NAME_MINIGAME=vinplay_minigame
+    ports:
+      - "3002:3002"
+    restart: always
+    networks:
+      env-setup_mynetwork:
+        ipv4_address: 10.5.0.27
+
+networks:
+  env-setup_mynetwork:
+    external: true

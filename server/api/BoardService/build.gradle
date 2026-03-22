@@ -1,0 +1,26 @@
+plugins {
+    id 'org.springframework.boot' version '2.4.8'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'java'
+}
+
+group 'com.vingame'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    implementation group: 'org.redisson', name: 'redisson', version: '3.25.2'
+    implementation group: 'org.telegram', name: 'telegrambots', version: '6.9.7.1'
+    implementation group: 'org.mongodb', name: 'mongo-java-driver', version: '3.12.14'
+    implementation group: 'com.maxmind.geoip2', name: 'geoip2', version: '2.8.0'
+    implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '3.14.9'
+    implementation group: 'com.microsoft.playwright', name: 'playwright', version: '1.49.0'
+    implementation 'org.json:json:20210307'
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.20'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+}

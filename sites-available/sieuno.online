@@ -1,0 +1,135 @@
+# sieuno.online — WinClub web front (reference: sites-available/vic68.win)
+# Install snippets first, then enable site:
+#   sudo cp /var/WinClubProject/nginx/snippets/winclub-game-routes.inc /etc/nginx/snippets/
+#   sudo ln -sf /var/WinClubProject/sites-available/sieuno.online /etc/nginx/sites-enabled/
+# TLS on origin: Cloudflare Full (Strict) needs a cert Cloudflare trusts.
+# Use Cloudflare Origin CA (recommended) or Let's Encrypt — see docs/CLOUDFLARE-ORIGIN-SSL.md
+# Files: /etc/ssl/cloudflare/sieuno.online.pem + sieuno.online.key
+
+# --- Game client (Cocos web-mobile) ---
+server {
+    server_name play.sieuno.online;
+
+    root /var/www/winclub/play/web-mobile;
+    index index.html index.htm;
+
+    location / {
+        try_files $uri $uri/ =404;
+        add_header Access-Control-Allow-Origin *;
+        add_header Cache-Control "no-cache, must-revalidate";
+    }
+
+    include /etc/nginx/snippets/winclub-game-routes.inc;
+
+    listen [::]:443 ssl ipv6only=on;
+    listen 443 ssl;
+    ssl_certificate /etc/ssl/cloudflare/sieuno.online.pem;
+    ssl_certificate_key /etc/ssl/cloudflare/sieuno.online.key;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+}
+
+# --- Landing / marketing ---
+server {
+    server_name sieuno.online www.sieuno.online;
+
+    root /var/www/winclub/landing;
+    index index.html index.htm;
+
+    location / {
+        try_files $uri $uri/ =404;
+        add_header Access-Control-Allow-Origin *;
+        add_header Cache-Control "no-cache, must-revalidate";
+    }
+
+    location = /config.json {
+        alias /var/www/winclub/landing/config.json;
+        add_header Cache-Control "no-cache, must-revalidate";
+    }
+
+    # /livestream/ is defined in winclub-game-routes.inc (same alias path)
+
+    include /etc/nginx/snippets/winclub-game-routes.inc;
+
+    listen [::]:443 ssl;
+    listen 443 ssl;
+    ssl_certificate /etc/ssl/cloudflare/sieuno.online.pem;
+    ssl_certificate_key /etc/ssl/cloudflare/sieuno.online.key;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+}
+
+# --- CMS admin (CodeIgniter PHP + dedicated PHP-FPM pool winclub-cms) ---
+# Pool: /etc/php/8.3/fpm/pool.d/winclub-cms.conf (env DB_*, BASE_URL, API_URL — see cms/deploy/php-fpm-pool-cms.example.conf)
+# Legacy Node admin on :3002: switch location / back to proxy_pass if needed.
+server {
+    server_name adp.sieuno.online quantri.sieuno.online;
+
+    root /var/WinClubProject/cms;
+    index index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.3-fpm-cms.sock;
+    }
+
+    location ~ /\. {
+        deny all;
+    }
+
+    location /giftcode-bot/ {
+        proxy_pass http://127.0.0.1:8090/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /ws-report/ {
+        proxy_pass http://127.0.0.1:7777/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    listen [::]:443 ssl;
+    listen 443 ssl;
+    ssl_certificate /etc/ssl/cloudflare/sieuno.online.pem;
+    ssl_certificate_key /etc/ssl/cloudflare/sieuno.online.key;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+}
+
+# --- Agent portal ---
+server {
+    server_name agent.sieuno.online;
+
+    location / {
+        proxy_pass http://127.0.0.1:3003;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    listen [::]:443 ssl;
+    listen 443 ssl;
+    ssl_certificate /etc/ssl/cloudflare/sieuno.online.pem;
+    ssl_certificate_key /etc/ssl/cloudflare/sieuno.online.key;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+}
+
+# --- HTTP → HTTPS (Cloudflare still hits :80 for redirects / some challenges) ---
+server {
+    listen 80;
+    listen [::]:80;
+    server_name sieuno.online www.sieuno.online play.sieuno.online adp.sieuno.online quantri.sieuno.online agent.sieuno.online;
+    return 301 https://$host$request_uri;
+}

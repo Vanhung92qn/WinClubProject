@@ -1,0 +1,71 @@
+
+1.Database
+    - (OK) tạo bảng result_tai_xiu_kubet
+    - (OK) tạo procedure tx_get_lich_su_giao_dich_kubet
+    - (OK) tạo procedure tx_get_top_win_kubet
+    - (OK) tao procedure tx_count_lich_su_giao_dich_kubet
+    - (OK) tạo procedure tx_get_chi_tiet_phien_kubet
+    - (OK) tạo procedure tx_get_history_no_hu_kubet
+    - (OK) tạo bảng user_rut_loc_kubet
+    - (OK) thêm referenceTaiXiuId (sessionId) vào bảng minigame.references
+2. Các key bị tác động
+    - (OK) taixiu_bot_fake_amount_md5 => taixiu_bot_fake_amount_kubet
+    - (OK - ignored) Tai_xiu_current_reference_md5 => Tai_xiu_current_reference_kubet
+    - (OK) admin_lst_msg_md5 => admin_lst_msg_kubet
+    - (OK - ignored) admin_msg_md5 => admin_msg_kubet
+    - (OK - ignored) md5_allow_betting_ => kubet_allow_betting_
+    - (OK) SC_TAI_XIU_MD5 => SC_TAI_XIU_KUBET
+    - (OK - ignored) tai_xiu_be_cang_md5 => tai_xiu_be_cang_kubet
+    - (OK) user_tai_xiu_md5 => user_tai_xiu_kubet
+    - (OK) Md5_Lobby_tx_tai_ => kubet_Lobby_tx_tai_
+    - (OK) Md5_Lobby_tx_xiu_ => kubet_Lobby_tx_xiu_
+    - (OK - ignored)txBank_md5 => txBank_kubet
+    - Sửa hàm bot: hiện tại mới chỉ có 2 loại bot tài và bot xỉu. Có thể Sửa thêm cả API Processor và CMS cấu hình BOT
+
+3. Tính năng bị loại bỏ
+    - bỏ fund
+4. Message và Object thay đổi
+    - TaiXiuInfoMsg: Thêm trường mới, thông tin khi vào phòng
+        * public long potChan;
+        * public long potLe;
+        * public long myBetChan;
+        * public long myBetLe;
+        * public String streamUrl
+
+    - TaiXiuAdminReportObj: thêm các trường thống kê mới trên form CMS can thiệp kết quả
+    - TaiXiuSetAmountBotFake.java: thêm 2 trường mới numberBotChanFake và numberBotLeFake. phục vụ CMS can thiệp kết quả
+    - UpdateTaiXiuPerSecondMsg
+            * (OK) Thêm mới kubet_Lobby_tx_chan_ ở hàm MGRoomTaiXiu.updateTaiXiuPerSecond
+            * (OK) Thêm mới kubet_Lobby_tx_le_ ở hàm MGRoomTaiXiu.updateTaiXiuPerSecond
+5. Tính năng thêm mới: thêm mới potChan, potLe, numBetChan, numBetLe
+    - (OK) queue_taixiu_md5 => queue_taixiu_kubet: thêm tính năng xử lý cho queue này
+    - API Backend:
+        * (OK) 554037 => SetBotFakeTaiXiuKubetProcessor
+        * (OK) 556670 => TaiXiuAdminKubetListChatProcessor
+    - (OK) Thêm mới websocket path cho trang Can Thiep Ket Qua MD5
+
+       <command>
+          <id>56102</id>
+          <name>chi tiet phien tai xiu</name>
+          <path>com.vinplay.api.processors.minigame.ChiTietPhienTXKUBETProcessor</path>
+        </command>
+
+        <command>
+            <id>56100</id>
+            <name>lich su giao dich tai xiu</name>
+            <path>com.vinplay.api.processors.minigame.LichSuGiaoDichTXKUBETProcessor</path>
+        </command>
+
+        // boardName = TaiXiuKubet
+        <command>
+            <id>4108</id>
+            <name>Get top vinh danh by game name</name>
+            <path>com.vinplay.api.processors.GetTopVinhDanhByGameNameProcessor</path>
+        </command>
+
+
+
+
+
+
+curl 'https://ga88.ku6696.net/Api/Common/GetSKAll'   -H 'accept: application/json, text/plain, */*'   -H 'accept-language: en-US,en;q=0.9,vi;q=0.8'   -H 'content-type: application/json;charset=UTF-8'   -H 'cookie: _videogameCulture=vi-VN; PHPSESSID=napn3rnr8vg5q4ecjhi6rop1m4'   -H 'origin: https://ga88.ku6696.net'   -H 'priority: u=1, i'   -H 'referer: https://ga88.ku6696.net/Home/Game1'   -H 'sec-ch-ua: "Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"'   -H 'sec-ch-ua-mobile: ?0'   -H 'sec-ch-ua-platform: "Windows"'   -H 'sec-fetch-dest: empty'   -H 'sec-fetch-mode: cors'   -H 'sec-fetch-site: same-origin'   -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'   --data-raw '{"SKey":"1","CKey":"71101","DType":1,"CType":1,"IsS":1,"PlayTool":4}'

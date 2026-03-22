@@ -1,0 +1,34 @@
+plugins {
+    id 'java'
+}
+
+group 'com.vingame'
+version '1.0'
+
+sourceCompatibility = 1.8
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'    
+    compile project(':VinPlayUserCore')
+    compile project(':VinPlayDAL')
+    compile project(':BitzeroAll')
+    compile project(':BitzeroAll')
+    compile fileTree(include: ['*.jar'], dir: '../../libs')
+}
+task copyJar(type: Copy) {
+    from configurations.compile {
+        include 'VinPlayUserCore*.jar', 'BitzeroAll*.jar', "VinPlayDAL*.jar", "VbeeCommon*.jar"
+    }
+    into 'libs/'
+}
+
+task copylibs(type: Copy) {
+    from '../../libs'
+    into 'libs'
+}
+
+copylibs.dependsOn copyJar
+build.dependsOn copylibs

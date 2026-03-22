@@ -1,0 +1,13 @@
+services:
+  fish:
+    image: bancodegame/fish
+    ports:
+      - '2083:2083'
+      - '8888:8888/udp'
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: host
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro

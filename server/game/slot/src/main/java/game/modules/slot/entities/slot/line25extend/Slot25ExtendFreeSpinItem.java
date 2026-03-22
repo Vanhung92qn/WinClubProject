@@ -1,0 +1,58 @@
+/*
+ * Decompiled with CFR 0.144.
+ */
+package game.modules.slot.entities.slot.line25extend;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+public enum Slot25ExtendFreeSpinItem {
+
+    H("H", 5, "H", (byte) 0),
+    G("G", 5, "G", (byte) 1),
+    WILD("WILD", 5, "WILD", (byte) 2),
+    F("F", 6, "F", (byte) 3),
+    E("E", 7, "E", (byte) 4),
+    D("D", 8, "D", (byte) 5),
+    C("C", 9, "C", (byte) 6),
+    B("B", 10, "B", (byte) 7),
+    A("A", 11, "A", (byte) 8);
+
+    private String name;
+    private byte id;
+
+    private static final Map<Integer, Slot25ExtendFreeSpinItem> id2Item = new HashMap<>();
+
+    Slot25ExtendFreeSpinItem(String s, int n2, String name, byte id) {
+        this.name = name;
+        this.id = id;
+    }
+
+    static {
+        Arrays.stream(Slot25ExtendFreeSpinItem.values()).forEach(item -> {
+            id2Item.put((int) item.getId(), item);
+        });
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setId(byte id) {
+        this.id = id;
+    }
+
+    public byte getId() {
+        return this.id;
+    }
+
+    public static Slot25ExtendFreeSpinItem findItem(byte id) {
+        return id2Item.get((int) id);
+    }
+}
+

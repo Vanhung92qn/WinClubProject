@@ -1,0 +1,166 @@
+/*
+ * Decompiled with CFR 0.144.
+ *
+ * Could not load the following classes:
+ *  com.vinplay.vbee.common.cp.BaseProcessor
+ *  com.vinplay.vbee.common.cp.Param
+ *  com.vinplay.vbee.common.messages.BaseMessage
+ *  com.vinplay.vbee.common.messages.LogMoneyUserMessage
+ *  com.vinplay.vbee.common.statics.Consts
+ *  org.apache.log4j.Logger
+ */
+package com.vinplay.vbee.rmq.log.processor;
+
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.UpdateOptions;
+import com.vinplay.dal.dao.impl.StatMoneyInOutDaoImpl;
+import com.vinplay.vbee.common.cp.BaseProcessor;
+import com.vinplay.vbee.common.cp.Param;
+import com.vinplay.vbee.common.enums.Games;
+import com.vinplay.vbee.common.messages.BaseMessage;
+import com.vinplay.vbee.common.messages.LogMoneyUserMessage;
+import com.vinplay.vbee.common.mongodb.MongoDBConnectionFactory;
+import com.vinplay.dal.entities.report.ReportMoneyModelNew;
+import com.vinplay.vbee.common.statics.Consts;
+import com.vinplay.vbee.dao.impl.LogMoneyUserDaoImpl;
+import org.bson.Document;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+
+public class LogMoneyUserProcessor implements BaseProcessor<byte[], Boolean> {
+    private static final Logger logger = Logger.getLogger((String) "vbee");
+
+    //todo: Log money user thay đổi - LogMoneyUserProcessor
+    public Boolean execute(Param<byte[]> param) {
+        LogMoneyUserMessage message = (LogMoneyUserMessage) BaseMessage.fromBytes((byte[]) ((byte[]) param.get()));
+        //if (message.isBot() && Math.abs(message.getMoneyExchange()) <= 100000L) {
+        if (message.isBot()) {
+            //logger.info((Object)("Khong xu ly bot: " + message.getNickname() + ", money exchange= " + message.getMoneyExchange()));
+        } else {
+            LogMoneyUserDaoImpl dao = new LogMoneyUserDaoImpl();
+            long transId = 0L;
+            int queryType = -1;
+            if (message.getMoneyType().equals("vin")) {
+                transId = ++com.vinplay.vbee.main.VBeeMain.moneyVinReferenceId;
+            } else if (message.getMoneyType().equals("xu")) {
+                transId = ++com.vinplay.vbee.main.VBeeMain.moneyXuReferenceId;
+            }
+
+            dao.saveLogMoneyUser(message, transId, message.isBot(), message.isVp());
+
+            //20240914
+            try {
+                if (message.getMoneyType().equals("vin")) {
+                    upsertReportMoney(message);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            if (message.getMoneyExchange() < 0 && Consts.GAMES_WITH_OUT_BAN_CA.get(message.getActionName()) != null) {
+                StatMoneyInOutDaoImpl statMoneyInOutDao = StatMoneyInOutDaoImpl.getInstance();
+                statMoneyInOutDao.upsertStatisticMoneyInOut(message.getNickname(), 0L, 0L, 0L, 0L, 0L, 0L, message.getMoneyExchange() * -1);
+            }
+
+            //===================
+            if (message.getMoneyType().equalsIgnoreCase("vin")) {
+                if (message.getMoneyExchange() > 0L) {
+                    if (Consts.NAP_VIN.contains(message.getActionName())) {
+                        queryType = 3;
+                        dao.saveLogMoneyUserVinOther(message, transId, queryType);
+                    }
+                } else if (Consts.TIEU_VIN.contains(message.getActionName())) {
+                    queryType = 5;
+                    dao.saveLogMoneyUserVinOther(message, transId, queryType);
+                }
+            }
+        }
+        return true;
+    }
+
+    private void upsertReportMoney(LogMoneyUserMessage log) {
+
+        ReportMoneyModelNew report = createReportMoney(log);
+
+        MongoDatabase db = MongoDBConnectionFactory.getDB();
+        MongoCollection<Document> col = db.getCollection("report_money_game");
+        Map<String, Object> map = new HashMap<>();
+        map.put("nick_name", report.getNickName());
+        map.put("action_name", report.getActionName());
+        map.put("report_date", report.getReportDate());
+        map.put("is_game", report.isGame);
+
+
+        // Define the query filter
+        Document query = new Document(map);
+
+        // Define the update operation
+        Document update = new Document("$inc",
+                new Document("total_out", report.totalOut)
+                        .append("total_refund", report.totalRefund)
+                        .append("total_in", report.totalIn)
+                        .append("fee", report.getFee()));
+
+        // Define the options (upsert: true)
+        UpdateOptions options = new UpdateOptions().upsert(true);
+
+        // Perform the update operation with upsert
+        col.updateOne(query, update, options);
+    }
+
+    private ReportMoneyModelNew createReportMoney(LogMoneyUserMessage log) {
+        ReportMoneyModelNew report = new ReportMoneyModelNew(log);
+        return processGame(report, log);
+    }
+
+
+    private ReportMoneyModelNew processGame(ReportMoneyModelNew model, LogMoneyUserMessage log) {
+        model.isGame = Consts.GAMES.contains(log.getActionName());
+        if (log.getActionName().equals(Consts.TAI_XIU)) {
+            if (log.getMoneyExchange() < 0) {
+                model.totalOut = log.getMoneyExchange();
+            } else if (log.getServiceName().contains("Hoàn trả")) {
+                model.totalRefund = log.getMoneyExchange();
+            } else {
+                model.totalIn = log.getMoneyExchange();
+            }
+        } else if (
+            // these code for SLOT MACHINE GAME ONLY
+                (log.getActionName().equals(Games.MINI_POKER.getName())
+                        || log.getActionName().equals(Games.CANDY.getName())
+                        || log.getActionName().equals(Games.FAST_AND_FURIOUS.getName())
+                        || log.getActionName().equals(Games.SEXY_DANCE.getName())
+                        || log.getActionName().equals(Games.COWBOY.getName())
+                        || log.getActionName().equals(Games.LADY_NIGHT.getName())
+                        || log.getActionName().equals(Games.BONG_LAI_CAC.getName())
+                        || log.getActionName().equals(Games.LIEN_MINH.getName())
+                        || log.getActionName().equals(Games.LAS_VEGAS.getName())
+                        || log.getActionName().equals(Games.HALLOWEEN.getName())
+                        || log.getActionName().equals(Games.BIG_CITY_BOY.getName())
+                        && log.getDescription().startsWith("Đặt cược"))) {
+            if (log.getMoneyExchange() < 0) {
+                model.totalOut = log.getMoneyExchange();
+            } else {
+                model.totalIn = log.getMoneyExchange();
+            }
+        } else {
+            if (log.getMoneyExchange() < 0) {
+                model.totalOut = log.getMoneyExchange();
+            } else {
+                model.totalIn = log.getMoneyExchange();
+            }
+        }
+        model.fee = log.getFee();
+        //model.moneyExchange = log.getMoneyExchange();
+        model.revenue = (model.totalOut + model.totalIn + model.totalRefund);
+
+        return model;
+    }
+
+
+}
+

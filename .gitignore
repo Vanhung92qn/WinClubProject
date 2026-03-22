@@ -1,0 +1,47 @@
+# Mặc dù bạn cho phép push .env, nhưng BẮT BUỘC phải chặn các thư mục Cache/Build sau đây. 
+# Nếu không chặn, dung lượng giỏ code sẽ lên tới nhiều Gigabyte, Git Push sẽ báo lỗi văng ngay lập tức và VPS tải về rất chậm.
+
+# 1. Rác Của Hệ Điều Hành & IDE Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+.project
+.settings/
+
+# 2. Bộ nhớ đệm (Cache) của Java & Gradle (Push lên VPS Linux sẽ bị lỗi chéo HĐH)
+.gradle/
+.nb-gradle/
+build/
+out/
+target/
+*.class
+
+# 3. Cache của Cocos Creator Client (Chỉ cần giữ file Code & Asset, lúc chạy nó tự sinh cache)
+client/temp/
+client/library/
+client/local/
+client/build/
+client/node_modules/
+
+# 4. File Logs rác (Nặng hàng GB)
+logs/
+*.log
+npm-debug.log*
+
+# 5a. Docker secrets (copy from docker/.env.example)
+docker/.env
+docker/replset88.key
+# Runtime DB/Redis/Mongo volumes (rất nặng, máy local tự tạo lại)
+docker/data/
+
+# 5. Các thư viện tải về của Python/NodeJS (Nên để VPS tự kéo để khớp nền tảng Linux)
+node_modules/
+__pycache__/
+*.pyc
+venv/
+env/
+
+*.zip
+ClientGameVerSeverC#/
