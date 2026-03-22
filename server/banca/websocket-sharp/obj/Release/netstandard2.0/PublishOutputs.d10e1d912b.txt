@@ -1,0 +1,3 @@
+/var/WinClubProject/server/banca/BanCaLiteNet/out/websocket-sharp.dll
+/var/WinClubProject/server/banca/BanCaLiteNet/out/websocket-sharp.deps.json
+/var/WinClubProject/server/banca/BanCaLiteNet/out/websocket-sharp.pdb

@@ -1,0 +1,3 @@
+/var/WinClubProject/server/banca/BanCaLiteNet/out/Fleck.dll
+/var/WinClubProject/server/banca/BanCaLiteNet/out/Fleck.deps.json
+/var/WinClubProject/server/banca/BanCaLiteNet/out/Fleck.pdb

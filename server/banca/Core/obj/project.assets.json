@@ -6698,19 +6698,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\ADMIN\\.nuget\\packages\\": {}
+    "/home/sdbgwerH/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\game\\sunwin\\banca\\Core\\Core.csproj",
+      "projectUniqueName": "/var/WinClubProject/server/banca/Core/Core.csproj",
       "projectName": "Core",
-      "projectPath": "C:\\game\\sunwin\\banca\\Core\\Core.csproj",
-      "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-      "outputPath": "C:\\game\\sunwin\\banca\\Core\\obj\\",
+      "projectPath": "/var/WinClubProject/server/banca/Core/Core.csproj",
+      "packagesPath": "/home/sdbgwerH/.nuget/packages/",
+      "outputPath": "/var/WinClubProject/server/banca/Core/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\ADMIN\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "/home/sdbgwerH/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "netstandard2.0"
@@ -6722,11 +6722,11 @@
         "netstandard2.0": {
           "targetAlias": "netstandard2.0",
           "projectReferences": {
-            "C:\\game\\sunwin\\banca\\Fleck\\Fleck.csproj": {
-              "projectPath": "C:\\game\\sunwin\\banca\\Fleck\\Fleck.csproj"
+            "/var/WinClubProject/server/banca/Fleck/Fleck.csproj": {
+              "projectPath": "/var/WinClubProject/server/banca/Fleck/Fleck.csproj"
             },
-            "C:\\game\\sunwin\\banca\\websocket-sharp\\websocket-sharp.csproj": {
-              "projectPath": "C:\\game\\sunwin\\banca\\websocket-sharp\\websocket-sharp.csproj"
+            "/var/WinClubProject/server/banca/websocket-sharp/websocket-sharp.csproj": {
+              "projectPath": "/var/WinClubProject/server/banca/websocket-sharp/websocket-sharp.csproj"
             }
           }
         }
@@ -6735,11 +6735,6 @@
         "warnAsError": [
           "NU1605"
         ]
-      },
-      "restoreAuditProperties": {
-        "enableAudit": "true",
-        "auditLevel": "low",
-        "auditMode": "direct"
       }
     },
     "frameworks": {
@@ -6808,7 +6803,7 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.402\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/home/sdbgwerH/.dotnet/sdk/6.0.428/RuntimeIdentifierGraph.json"
       }
     }
   }

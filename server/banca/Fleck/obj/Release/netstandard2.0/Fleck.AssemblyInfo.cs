@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCopyrightAttribute("Copyright Jason Staten 2010-2018. All rights reserved.")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("C# WebSocket Implementation")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.0.0.1")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.0.0.1-local+c305a32ceae19cd86d964d90e6d3f65f1309372d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.0.0.1-local")]
 [assembly: System.Reflection.AssemblyProductAttribute("Fleck")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Fleck")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.0.0.1")]

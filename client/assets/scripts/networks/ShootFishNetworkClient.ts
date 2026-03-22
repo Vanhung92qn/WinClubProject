@@ -1,5 +1,6 @@
 import Configs from "../../scripts/common/Configs";
 import App from "../common/App";
+import PortalPassword from "../../core/auth/PortalPassword";
 
 const { ccclass, property } = cc._decorator;
 
@@ -111,7 +112,7 @@ export default class ShootFishNetworkClient {
         // }, (res) => {
         this.request("xxenglogin", {
             "username": Configs.Login.Username,
-            "password": md5(Configs.Login.Password),
+            "password": PortalPassword.forApi(Configs.Login.Password),
             "platform": Configs.App.getPlatformName(),
         }, (res) => {
             this.isLogining = false;

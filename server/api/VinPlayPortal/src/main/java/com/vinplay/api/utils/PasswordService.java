@@ -66,9 +66,11 @@ public final class PasswordService {
         }
         // Legacy MD5 fallback (32-char hex)
         if (storedHash.length() == 32) {
+            // Direct match: input is already MD5 hash (e.g. from old banca client)
+            if (plainPassword.equals(storedHash)) return true;
+            // Input is plaintext → hash and compare
             try {
-                String md5 = getMD5Hash(plainPassword);
-                return storedHash.equals(md5);
+                return storedHash.equals(getMD5Hash(plainPassword));
             } catch (Exception e) {
                 return false;
             }
