@@ -85,18 +85,23 @@ namespace Configs {
         static CONFIG_URL = `https://raw.githubusercontent.com/chaunhuanphat/dev-tito/master/production.json?v=${Date.now()}`;
         static HOT_UPDATE_URL = "https://raw.githubusercontent.com/chaunhuanphat/dev-tito/master/";
         static BUNDLE_URL = "sieuno.online/remote-assets";
-        static DOMAIN: string = "https://demo.sieuno.online";
-        static API: string = "https://sieuno.online/api";
+
+        // ══════════════════════════════════════════════════════════════
+        //  DOMAIN & PROTOCOL — Tất cả kết nối đi qua domain duy nhất
+        //  Đổi domain? Sửa VersionConfig.DOMAIN_LOCAL / DOMAIN_PRO
+        // ══════════════════════════════════════════════════════════════
+        static DOMAIN: string = VersionConfig.DOMAIN_LOCAL;
+        static USE_WSS: boolean = true;
+        static API: string = `https://${VersionConfig.DOMAIN_LOCAL}/api`;
+
         static MONEY_TYPE = 1;
-        static LINK_DOWNLOAD = "https://sieuno.online/download";
-        static LINK_EVENT = "https://sieuno.online/event";
-        static LINK_SUPPORT = "https://sieuno.online";
-        static USE_WSS = true;
-        //static LINK_GROUP = "https://www.facebook.com/groups/bao99.vip";
+        static LINK_DOWNLOAD = `https://${VersionConfig.DOMAIN_LOCAL}/download`;
+        static LINK_EVENT = `https://${VersionConfig.DOMAIN_LOCAL}/event`;
+        static LINK_SUPPORT = `https://${VersionConfig.DOMAIN_LOCAL}`;
         static LINK_GROUP = "";
-        static BANCA = "https://banca.honghunghoi.net";
-        static SICBO = "https://sicbo.honghunghoi.net";
-        static XENG777 = "https://xeng777.honghunghoi.net";
+        static BANCA = `https://${VersionConfig.DOMAIN_LOCAL}/banca`;
+        static SICBO = `https://${VersionConfig.DOMAIN_LOCAL}/sicbo`;
+        static XENG777 = `https://${VersionConfig.DOMAIN_LOCAL}/xeng777`;
         static LINK_BOT_OTP = "https://t.me/sunsunotp_bot";
         static MAP_DAILY = [];
         static BUNDLE_CONFIG = {
@@ -104,85 +109,29 @@ namespace Configs {
             jsList: []
         }
 
-        static  HOST_MINIGAME = {
-            
-            host: "wmini.sieuno.online",
-            port: 443
-        };
-        static  HOST_BAU_CUA_TO2 = {
-            
-            host: "wbaucuato2.sieuno.online",
-            port: 443
-        };
-        static  HOST_TAIXIU = {
-            host: "wbaucuato2.sieuno.online",
-            port: 443
-        };
-        static  HOST_TAI_XIU_MINI2 = {
-            
-            host: "overunder.sieuno.online",
-            port: 443
-        };
-        static  HOST_SLOT = {
-           
-            host: "wslot.sieuno.online",
-            port: 443
-        };
-        static  HOST_TLMN = {
-            
-            host: "wltmn.sieuno.online",
-            port: 443
-        };
-        static  HOST_SHOOT_FISH = {
-            
-            host: "wbanca.sieuno.online",
-            port: 443
-        };
-        static  HOST_SAM = {
-            host: "wsam.sieuno.online",
-            
-            port: 443
-        };
-        static  HOST_XOCDIA = {
-            host: "wxocdia.sieuno.online",
-            port: 443
-        };
-        static  HOST_BACAY = {
-            host: "wbacay.sieuno.online",
-            port: 443
-        };
-        static  HOST_BAICAO = {
-            host: "wbaicao.sieuno.online",
-            port: 443
-        }
-        static  HOST_POKER = {
-            host: "wpoker.sieuno.online",
-            port: 443
-        };
-        static  HOST_XIDACH = {
-            host: "wpoker.sieuno.online",
-            port: 443
-        };
-        static  HOST_BINH = {
-            host: "wpoker.sieuno.online",
-            port: 443
-        };
-        static  HOST_LIENG = {
-            host: "wpoker.sieuno.online",
-            port: 443
-        };
-        static  HOST_TAIXIU_MD5 = {
-            host: "wbaucuato2.sieuno.online",
-            port: 12044
-        };
-        static  HOST_TAIXIU_LIVE_KUBET = {
-            host: "wbaucuato2.sieuno.online",
-            port: 22044
-        };
-        static  HOST_XOCDIA_LIVE_KUBET = {
-            host: "wbaucuato2.sieuno.online",
-            port: 22344
-        };
+        // ══════════════════════════════════════════════════════════════
+        //  GAME SERVER PATHS — Nginx route: /socket-client/{path}
+        //  URL = wss://DOMAIN/socket-client/{host}
+        //  "host" here = Nginx location name, NOT an actual hostname
+        // ══════════════════════════════════════════════════════════════
+        static  HOST_MINIGAME    = { host: "minigame",          port: 1644 };
+        static  HOST_SLOT        = { host: "slotmachine",       port: 1844 };
+        static  HOST_TAIXIU      = { host: "taixiu",            port: 2044 };
+        static  HOST_TAI_XIU_MINI2 = { host: "overunder",       port: 2044 };
+        static  HOST_TAIXIU_MD5  = { host: "taixiumd5",         port: 12044 };
+        static  HOST_TAIXIU_LIVE_KUBET = { host: "taixiu-kubet", port: 22044 };
+        static  HOST_XOCDIA      = { host: "xocdia",            port: 2344 };
+        static  HOST_XOCDIA_LIVE_KUBET = { host: "xocdiakubet", port: 22344 };
+        static  HOST_BACAY       = { host: "bacay",             port: 1044 };
+        static  HOST_BAICAO      = { host: "baicao",            port: 1144 };
+        static  HOST_BINH        = { host: "binh",              port: 1244 };
+        static  HOST_POKER       = { host: "poker",             port: 1744 };
+        static  HOST_XIDACH      = { host: "poker",             port: 1744 };
+        static  HOST_LIENG       = { host: "lieng",             port: 2244 };
+        static  HOST_SAM         = { host: "sam",               port: 1944 };
+        static  HOST_TLMN        = { host: "tienlenmiennam",    port: 2144 };
+        static  HOST_SHOOT_FISH  = { host: "banca",             port: 2083 };
+        static  HOST_BAU_CUA_TO2 = { host: "baucua",            port: 3644 };
 
         static readonly SERVER_CONFIG = {
             ratioNapTheVTT: 1,
@@ -280,128 +229,67 @@ namespace Configs {
             return cc.sys.localStorage.getItem(name)
         }
 
+        /**
+         * Initialize config based on environment.
+         * All envs use the same pattern: wss://DOMAIN/socket-client/{path}
+         * Game HOST paths are already set as defaults above — init() only overrides DOMAIN/API.
+         *
+         * Remote config (LoadingController) can override DOMAIN via localStorage keys
+         * (DOMAIN_GAME_PROD, MINIGAME_CONTEXT, etc.) for dynamic server switching.
+         */
         static init() {
+            // ── Step 1: Set DOMAIN based on environment ──
             switch (VersionConfig.ENV) {
                 case VersionConfig.ENV_LOCAL:
-                    this.USE_WSS = false;
-                    this.DOMAIN = ""+VersionConfig.DOMAIN_LOCAL+"/";
-                    this.API = "http://"+VersionConfig.DOMAIN_LOCAL+":8081/api";
-                    this.MONEY_TYPE = 1;
-                    this.LINK_DOWNLOAD = "http://"+VersionConfig.DOMAIN_LOCAL+"/landing";
-                    this.LINK_EVENT = "http://"+VersionConfig.DOMAIN_LOCAL+"event";
-                    this.LINK_SUPPORT = ""+VersionConfig.DOMAIN_LOCAL+"";
-
-                    this.HOST_MINIGAME.host =""+ VersionConfig.DOMAIN_LOCAL;
-                    this.HOST_MINIGAME.port = 1644;
-                    this.HOST_TAI_XIU_MINI2.host = "overunder."+VersionConfig.DOMAIN_LOCAL;
-                    this.HOST_SLOT.host = ""+VersionConfig.DOMAIN_LOCAL+"";
-                    this.HOST_SLOT.port = 1844;
-                    this.HOST_TLMN.host = ""+VersionConfig.DOMAIN_LOCAL;
-                    this.HOST_TLMN.port = 2144;
-                    this.HOST_SAM.host = ""+VersionConfig.DOMAIN_LOCAL;
-                    this.HOST_SAM.port = 1944;
-                    this.HOST_XOCDIA.host = ""+VersionConfig.DOMAIN_LOCAL+"";
-                    this.HOST_XOCDIA.port = 2344;
-                    this.HOST_BACAY.host = ""+VersionConfig.DOMAIN_LOCAL+"";
-                    this.HOST_BACAY.port = 1044;
-                    this.HOST_BAICAO.host = ""+VersionConfig.DOMAIN_LOCAL+"";
-                    this.HOST_BAICAO.port = 1144;
-                    this.HOST_POKER.host = ""+VersionConfig.DOMAIN_LOCAL+"";
-                    this.HOST_POKER.port = 1744;
-                    this.HOST_BINH.host = VersionConfig.DOMAIN_LOCAL+"";
-                    this.HOST_BINH.port = 1244;
-                    this.HOST_LIENG.host = "wlieng."+VersionConfig.DOMAIN_LOCAL+"";
-                    this.HOST_LIENG.port = 443;
-                   // this.HOST_SHOOT_FISH.host = "wbanca."+VersionConfig.DOMAIN_LOCAL+"";
-                    this.HOST_SHOOT_FISH.host = "20.244.8.116";
-                    this.HOST_SHOOT_FISH.port = 2083;
-                    this.HOST_BAU_CUA_TO2.host = ""+VersionConfig.DOMAIN_LOCAL+"";
-                    this.HOST_BAU_CUA_TO2.port = 3644;
-                    this.HOST_TAIXIU.host = ""+VersionConfig.DOMAIN_LOCAL+"";
-                    this.HOST_TAIXIU.port = 2044;
-                    this.HOST_TAIXIU_MD5.host = VersionConfig.DOMAIN_LOCAL;
-                    this.HOST_TAIXIU_MD5.port = 12044;
-
-                    this.HOST_TAIXIU_LIVE_KUBET.host = VersionConfig.DOMAIN_LOCAL;
-                    this.HOST_TAIXIU_LIVE_KUBET.port = 22044;
-                    this.HOST_XOCDIA_LIVE_KUBET.host = VersionConfig.DOMAIN_LOCAL;
-                    this.HOST_XOCDIA_LIVE_KUBET.port = 22344;
-
+                    this.DOMAIN = VersionConfig.DOMAIN_LOCAL;
                     break;
                 case VersionConfig.ENV_DEV:
-                    this.USE_WSS = true;
-                    this.MONEY_TYPE = 1;
-
-                    if(cc.sys.localStorage.getItem("MINIGAME_CONTEXT")){
-                        VersionConfig.DOMAIN_DEV = this.getDomain("DOMAIN_GAME_DEV") ;
-                        this.HOST_MINIGAME.host = this.getDomain("MINIGAME_CONTEXT");
-                        this.HOST_TAI_XIU_MINI2.host = this.getDomain("HOST_TAI_XIU_MINI2");
-                        this.HOST_SLOT.host = this.getDomain("SLOT_CONTEXT");
-                        this.HOST_TLMN.host = this.getDomain("TLMN_CONTEXT");
-                        this.HOST_SHOOT_FISH.host = this.getDomain("SHOOT_FISH_CONTEXT");
-                        this.HOST_SAM.host = this.getDomain("SAM_CONTEXT");
-                        this.HOST_XOCDIA.host = this.getDomain("XOCDIA_CONTEXT");
-                        this.HOST_BACAY.host = this.getDomain("BACAY_CONTEXT");
-                        this.HOST_BAICAO.host = this.getDomain("BAICAO_CONTEXT");
-                        this.HOST_POKER.host = this.getDomain("POKER_CONTEXT");
-                        this.HOST_BINH.host = this.getDomain("BINH_CONTEXT");
-                        this.HOST_BAU_CUA_TO2.host = this.getDomain("BAU_CUA_TO2_CONTEXT");
-                        this.HOST_TAIXIU.host = this.getDomain("TAIXIU_CONTEXT");
-                        this.HOST_TAIXIU_MD5.host = this.getDomain("TAIXIUMD5_CONTEXT");
-                        this.API = `https://${VersionConfig.DOMAIN_DEV}/api-portal`;
-                        break;
-                    }
+                    this.DOMAIN = this.getDomain("DOMAIN_GAME_DEV") || VersionConfig.DOMAIN_DEV;
                     break;
                 case VersionConfig.ENV_PROD:
-                    this.USE_WSS = true;
-                    this.DOMAIN = `${this.getDomain("DOMAIN_GAME_PROD")}`;
-                    this.MONEY_TYPE = 1;
-                    this.HOST_MINIGAME.host = this.getDomain("MINIGAME_CONTEXT");
-                    this.HOST_TAI_XIU_MINI2.host = this.getDomain("HOST_TAI_XIU_MINI2");
-                    this.HOST_SLOT.host = this.getDomain("SLOT_CONTEXT");
-                    this.HOST_TLMN.host = this.getDomain("TLMN_CONTEXT");
-                    this.HOST_SHOOT_FISH.host = this.getDomain("SHOOT_FISH_CONTEXT");
-                    this.HOST_SAM.host = this.getDomain("SAM_CONTEXT");
-                    this.HOST_XOCDIA.host = this.getDomain("XOCDIA_CONTEXT");
-                    this.HOST_BACAY.host = this.getDomain("BACAY_CONTEXT");
-                    this.HOST_BAICAO.host = this.getDomain("BAICAO_CONTEXT");
-                    this.HOST_POKER.host = this.getDomain("POKER_CONTEXT");
-                    this.HOST_BINH.host = this.getDomain("BINH_CONTEXT");
-                    this.HOST_BAU_CUA_TO2.host = this.getDomain("BAUCUA_CONTEXT");
-                    this.HOST_TAIXIU.host = this.getDomain("TAIXIU_CONTEXT");
-                    this.HOST_TAIXIU_MD5.host = this.getDomain("TAIXIUMD5_CONTEXT");
-                    this.HOST_TAIXIU_LIVE_KUBET.host = 'taixiu-kubet';
-                    this.HOST_XOCDIA_LIVE_KUBET.host = 'xocdiakubet'
-                    this.API = `https://${this.DOMAIN}/api-portal`;
+                    this.DOMAIN = this.getDomain("DOMAIN_GAME_PROD") || VersionConfig.DOMAIN_PRO;
                     break;
                 default:
-                    this.USE_WSS = true;
-                    this.DOMAIN = "https://"+VersionConfig.DOMAIN_DEV+"/";
-                    this.API = "https://"+VersionConfig.DOMAIN_DEV+"/api";
-                    this.MONEY_TYPE = 1;
-                    this.LINK_DOWNLOAD = "https://"+VersionConfig.DOMAIN_DEV+"";
-                    this.LINK_EVENT = "https://"+VersionConfig.DOMAIN_DEV+"/event";
-                    this.LINK_SUPPORT = "https://www.comm100.com/";
-
-                    this.HOST_MINIGAME.host = "wmini."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_TAI_XIU_MINI2.host = "overunder."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_SLOT.host = "gomsu."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_TLMN.host = "wtlmn."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_SHOOT_FISH.host = "wbanca."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_SAM.host = "wsam."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_XOCDIA.host = "quanly."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_BACAY.host = "wbacay."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_BAICAO.host = "wbaicao."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_POKER.host = "wpoker."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_XIDACH.host = "wxizach."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_BINH.host = "wbinh."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_LIENG.host = "wlieng."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_BAU_CUA_TO2.host = "wbaucuato2."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_TAIXIU.host = "taixiu."+VersionConfig.DOMAIN_DEV+"";
-                    this.HOST_TAIXIU_MD5.host = `batrang.${VersionConfig.DOMAIN_DEV}`;
-                    this.LINK_GROUP = "https://www.facebook.com/groups/bao99.vip";
+                    this.DOMAIN = VersionConfig.DOMAIN_DEV;
                     break;
             }
+
+            // ── Step 2: Derive all URLs from DOMAIN (single source of truth) ──
+            this.USE_WSS = true;
+            this.MONEY_TYPE = 1;
+            this.API = `https://${this.DOMAIN}/api-portal`;
+            this.LINK_DOWNLOAD = `https://${this.DOMAIN}/download`;
+            this.LINK_EVENT = `https://${this.DOMAIN}/event`;
+            this.LINK_SUPPORT = `https://${this.DOMAIN}`;
+
+            // ── Step 3: Override HOST paths from remote config (if available) ──
+            // Remote server can push different path names via localStorage
+            // (set by LoadingController.start() from CONFIG_URL response)
+            if (VersionConfig.ENV !== VersionConfig.ENV_LOCAL) {
+                this.applyRemoteHostConfig();
+            }
+        }
+
+        /** Apply remote host overrides from localStorage (set by LoadingController) */
+        private static applyRemoteHostConfig() {
+            const override = (key: string, target: { host: string }) => {
+                let val = this.getDomain(key);
+                if (val) target.host = val;
+            };
+            override("MINIGAME_CONTEXT", this.HOST_MINIGAME);
+            override("SLOT_CONTEXT", this.HOST_SLOT);
+            override("TAIXIU_CONTEXT", this.HOST_TAIXIU);
+            override("TAIXIUMD5_CONTEXT", this.HOST_TAIXIU_MD5);
+            override("TLMN_CONTEXT", this.HOST_TLMN);
+            override("SAM_CONTEXT", this.HOST_SAM);
+            override("XOCDIA_CONTEXT", this.HOST_XOCDIA);
+            override("BACAY_CONTEXT", this.HOST_BACAY);
+            override("BAICAO_CONTEXT", this.HOST_BAICAO);
+            override("POKER_CONTEXT", this.HOST_POKER);
+            override("BINH_CONTEXT", this.HOST_BINH);
+            override("SHOOT_FISH_CONTEXT", this.HOST_SHOOT_FISH);
+            override("BAUCUA_CONTEXT", this.HOST_BAU_CUA_TO2);
+            override("HOST_TAI_XIU_MINI2", this.HOST_TAI_XIU_MINI2);
         }
     }
     export class GameId {

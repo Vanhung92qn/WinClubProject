@@ -250,15 +250,16 @@ export default class ShootFishNetworkClient {
         this.isForceClose = false;
         if (this.ws == null) {
             // this.ws = new WebSocket("wss://" + host + ":" + port + "/websocket");
-            if (this.isUseWSS) {
-                if (cc.sys.isNative && cc.sys.os == cc.sys.OS_ANDROID) {
-                    this.ws = new (Function.prototype.bind.apply(WebSocket, [null, `wss://${Configs.App.DOMAIN}/socket-client/${this.host}`, [], cc.url.raw("resources/raw/cacert.pem")]));
-                } else {
-                    this.ws = new WebSocket(`wss://${Configs.App.DOMAIN}/socket-client/${this.host}`);
-                }
+            // All traffic through Nginx: wss://DOMAIN/socket-client/{path}
+            let domain = Configs.App.DOMAIN;
+            if (domain.endsWith('/')) domain = domain.slice(0, -1);
+            let protocol = Configs.App.USE_WSS ? 'wss' : 'ws';
+            let url = `${protocol}://${domain}/socket-client/${this.host}`;
+            console.log(`[WS-Fish] Connecting: ${url}`);
+            if (Configs.App.USE_WSS && cc.sys.isNative && cc.sys.os == cc.sys.OS_ANDROID) {
+                this.ws = new (Function.prototype.bind.apply(WebSocket, [null, url, [], cc.url.raw("resources/raw/cacert.pem")]));
             } else {
-                // this.ws = new WebSocket(`ws://${Configs.App.DOMAIN}/socket-client/${this.host}`);
-				this.ws = new WebSocket(`ws://${this.host}:${this.port}`);
+                this.ws = new WebSocket(url);
             }
             this.ws.binaryType = "arraybuffer";
             this.ws.onopen = this.onOpen.bind(this);

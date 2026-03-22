@@ -12,28 +12,23 @@ export default class NetworkClient {
     _onOpenes: Array<NetworkListener> = [];
     _onCloses: Array<NetworkListener> = [];
 
-    // Reconnect rate limiting: exponential backoff
+    // Reconnect: exponential backoff (2s → 4s → 8s → 16s → 30s cap)
     private _reconnectAttempts: number = 0;
     private _maxReconnectAttempts: number = 10;
-    private _baseReconnectDelay: number = 2000;    // 2s initial
-    private _maxReconnectDelay: number = 30000;    // 30s max
+    private _baseReconnectDelay: number = 2000;
+    private _maxReconnectDelay: number = 30000;
     private _reconnectTimer: any = null;
 
     /**
-     * Build WebSocket URL based on environment config.
-     * - Production/Dev (USE_WSS=true): wss://domain/ws/gamename → Nginx proxy → game server
-     * - Local (USE_WSS=false): ws://host:port/websocket → direct connection
+     * All WebSocket traffic goes through Nginx reverse proxy:
+     *   wss://DOMAIN/socket-client/{gamePath}
+     * Client NEVER sees internal IP:port of game servers.
      */
-    private buildWsUrl(host: string, port: number): string {
-        if (Configs.App.USE_WSS) {
-            // Route through Nginx: wss://domain/socket-client/{host}
-            // Nginx terminates TLS → proxies ws:// to internal game server
-            let domain = Configs.App.DOMAIN;
-            if (domain.endsWith('/')) domain = domain.slice(0, -1);
-            return `wss://${domain}/socket-client/${host}`;
-        }
-        // Local/test: direct connection (no TLS)
-        return `ws://${host}:${port}/websocket`;
+    private buildWsUrl(host: string): string {
+        let domain = Configs.App.DOMAIN;
+        if (domain.endsWith('/')) domain = domain.slice(0, -1);
+        let protocol = Configs.App.USE_WSS ? 'wss' : 'ws';
+        return `${protocol}://${domain}/socket-client/${host}`;
     }
 
     connect(host: string, port: number) {
@@ -41,7 +36,7 @@ export default class NetworkClient {
         this.host = host;
         this.port = port;
         if (this.ws == null) {
-            let url = this.buildWsUrl(host, port);
+            let url = this.buildWsUrl(host);
             console.log(`[WS] Connecting: ${url}`);
             try {
                 if (Configs.App.USE_WSS && cc.sys.isNative && cc.sys.os == cc.sys.OS_ANDROID) {

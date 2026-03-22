@@ -3,19 +3,19 @@ export default class VersionConfig {
     static readonly ENV_DEV = "dev";
     static readonly ENV_PROD = "prod";
     static readonly ENV_LOCAL = "local";
-    // static readonly DOMAIN_DEV = "ace88.live";
-    static readonly DOMAIN_LOCAL = "20.244.8.116";
-    static DOMAIN_PRO = "bon.tips";
-    static DOMAIN_DEV = "bon.tips";
-    // static readonly DOMAIN_PRO = "ace88.live";
 
-    static DOMAINHOTUPDATE(){
-        if(cc.sys.localStorage.getItem("url_update")){
+    // ══════════════════════════════════════════════════
+    //  DOMAIN CONFIG — Đổi domain? SỬA Ở ĐÂY DUY NHẤT
+    // ══════════════════════════════════════════════════
+    static readonly DOMAIN_LOCAL = "sieuno.online";
+    static DOMAIN_DEV = "sieuno.online";
+    static DOMAIN_PRO = "sieuno.online";
+
+    static DOMAINHOTUPDATE() {
+        if (cc.sys.localStorage.getItem("url_update")) {
             return cc.sys.localStorage.getItem("url_update");
-
         }
-
-        return "honghunghoi.net"
+        return "sieuno.online";
     }
     static VersionName = "";
     static CPName = "";

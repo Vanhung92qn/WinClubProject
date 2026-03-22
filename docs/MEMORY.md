@@ -35,17 +35,18 @@
 - **SQL migration:** `20260322_bcrypt_migration.sql` — expand `SP_Register._password` từ VARCHAR(45) lên VARCHAR(125), expand `update_user_info.p_new` từ NVARCHAR(100) lên NVARCHAR(125).
 - **Client:** `PopUplogin.ts` xóa method `md52()` trùng lặp, dùng `PortalPassword.forApi()` thống nhất.
 
-### 2026-03-22 — WebSocket Security: WSS + Nginx Proxy + Reconnect Backoff
+### 2026-03-22 — Network Architecture: Domain-based + WSS + Centralized Config
 
-- **Trước:** Client kết nối `ws://IP:port` trực tiếp đến game servers — plain text, port lộ, dễ MITM.
-- **Sau:** Production/Dev dùng `wss://domain/socket-client/{gamename}` → Nginx terminate TLS → proxy `ws://` internal.
-  - Client chỉ biết 1 domain, không biết port game servers.
-  - Tất cả traffic mã hóa TLS.
-  - Game servers chỉ listen trên internal network.
-- **Files:**
-  - `Network.NetworkClient.ts`: `buildWsUrl()` tự chọn `wss://` (production) hoặc `ws://` (local) dựa `Configs.App.USE_WSS`.
-  - Thêm **exponential backoff reconnect**: 2s → 4s → 8s → ... → 30s cap, max 10 attempts. Ngăn flood khi game server down.
-  - Nginx routes đã tồn tại tại `nginx/snippets/winclub-game-routes.inc` (`/socket-client/{gamename}`).
+- **Mục tiêu:** Đổi domain (ví dụ sang win88.club) = sửa 1 dòng trong `VersionConfig.ts`.
+- **Trước:** Client kết nối `ws://20.244.8.116:1644` trực tiếp — IP lộ, port lộ, plain text, Mixed Content trên HTTPS.
+- **Sau:** `wss://sieuno.online/socket-client/{gamePath}` — TLS encrypted, 1 domain duy nhất.
+- **Kiến trúc mới:**
+  - `VersionConfig.ts`: `DOMAIN_LOCAL = "sieuno.online"` — single source of truth cho domain.
+  - `Configs.ts`: HOST objects chỉ chứa path name (e.g. `{ host: "minigame", port: 1644 }`), `USE_WSS = true` mọi ENV. `init()` chỉ set DOMAIN dựa ENV, mọi URL derive từ DOMAIN.
+  - `NetworkClient.ts`: `buildWsUrl(host)` → `wss://DOMAIN/socket-client/{host}`. Exponential backoff reconnect.
+  - `ShootFishNetworkClient.ts`: Cũng dùng centralized URL builder, xóa `ws://IP:port` hardcode.
+  - Nginx snippets: `winclub-game-routes-ws.inc` (port 80) + `winclub-game-routes.inc` (port 443).
+- **Kết quả:** 0 IP hardcode trong code client. 0 port game server lộ ra ngoài.
 
 ### 2026-03-22 — Login speed: kickSession async (5s → 0 block)
 
