@@ -257,7 +257,7 @@ namespace Configs {
             // ── Step 2: Derive all URLs from DOMAIN (single source of truth) ──
             this.USE_WSS = true;
             this.MONEY_TYPE = 1;
-            this.API = `https://${this.DOMAIN}/api-portal`;
+            this.API = `https://${this.DOMAIN}/api/v1`;
             this.LINK_DOWNLOAD = `https://${this.DOMAIN}/download`;
             this.LINK_EVENT = `https://${this.DOMAIN}/event`;
             this.LINK_SUPPORT = `https://${this.DOMAIN}`;

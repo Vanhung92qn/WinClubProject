@@ -1,75 +1,105 @@
 rootProject.name = 'BackendV2'
+
+// ── Shared Libraries ──────────────────────────────────────────────────────────
 include 'VbeeCommon'
 include 'VBeeSecurity'
 include 'VinPlayCardLib'
 include 'VinPlayDAL'
 include 'VinPlayUserCore'
-include 'cotuong'
 include 'BitzeroAll'
 include 'BitZeroMinigame'
 include 'CardCoreLib'
-include 'game:baicao'
-findProject(':game:baicao')?.name = 'baicao'
-include 'game:cotuong'
-findProject(':game:cotuong')?.name = 'cotuong'
-include 'game:cotuong'
-findProject(':game:cotuong')?.name = 'cotuong'
-include 'game:bacayServer'
-findProject(':game:bacayServer')?.name = 'bacayServer'
-include 'game:binh'
-findProject(':game:binh')?.name = 'binh'
-include 'game:lieng'
-findProject(':game:lieng')?.name = 'lieng'
-include 'game:Minigame'
-findProject(':game:Minigame')?.name = 'Minigame'
-//include 'game:OverUnder'
-//findProject(':game:OverUnder')?.name = 'OverUnder'
-include 'game:poker'
-findProject(':game:poker')?.name = 'poker'
-include 'game:sam'
-findProject(':game:sam')?.name = 'sam'
-include 'game:slot'
-findProject(':game:slot')?.name = 'SlotMachine'
-include 'game:tlmn'
-findProject(':game:tlmn')?.name = 'tlmn'
-include 'game:xidzach'
-findProject(':game:xidzach')?.name = 'xidzach'
-include 'game:xocdia'
-findProject(':game:xocdia')?.name = 'xocdia'
-include 'api:VinPlayBackend'
-findProject(':api:VinPlayBackend')?.name = 'VinPlayBackend'
-include 'api:VinPlayPortal'
-findProject(':api:VinPlayPortal')?.name = 'VinPlayPortal'
-include 'api:wspay'
-findProject(':api:wspay')?.name = 'wspay'
-include 'api:vbee'
-findProject(':api:vbee')?.name = 'vbee'
-include 'game:xizach'
-findProject(':game:xizach')?.name = 'xizach'
-include 'game:banca'
-findProject(':game:banca')?.name = 'banca'
-include 'game:slot3x3'
-findProject(':game:slot3x3')?.name = 'slot3x3'
-include 'game:kendo'
-findProject(':game:kendo')?.name = 'kendo'
-include 'CommonTool'
 include 'CommonTool'
 include 'ClearCache'
-include 'TestProject'
-include 'game:baucua'
-findProject(':game:baucua')?.name = 'baucua'
-include 'game:baucuato2'
-findProject(':game:baucuato2')?.name = 'baucuato2'
+
+// ── API Services (domain: user / payment / report) ────────────────────────────
+include 'api:VinPlayPortal'
+findProject(':api:VinPlayPortal')?.name = 'VinPlayPortal'
+
+include 'api:VinPlayBackend'
+findProject(':api:VinPlayBackend')?.name = 'VinPlayBackend'
+
+include 'api:wspay'
+findProject(':api:wspay')?.name = 'wspay'
+
 include 'api:wsreport'
 findProject(':api:wsreport')?.name = 'wsreport'
+
 include 'api:BoardService'
 findProject(':api:BoardService')?.name = 'BoardService'
+
+include 'api:vbee'
+findProject(':api:vbee')?.name = 'vbee'
+
+// ── Game Servers — Dice / Bàn cược ────────────────────────────────────────────
 include 'game:taixiuMini'
 findProject(':game:taixiuMini')?.name = 'taixiuMini'
+
 include 'game:taixiuMd5'
 findProject(':game:taixiuMd5')?.name = 'taixiuMd5'
+
 include 'game:taixiuKubet'
 findProject(':game:taixiuKubet')?.name = 'taixiuKubet'
+
+include 'game:xocdia'
+findProject(':game:xocdia')?.name = 'xocdia'
+
 include 'game:xocdiaKubet'
 findProject(':game:xocdiaKubet')?.name = 'xocdiaKubet'
 
+include 'game:baucua'
+findProject(':game:baucua')?.name = 'baucua'
+
+include 'game:baucuato2'
+findProject(':game:baucuato2')?.name = 'baucuato2'
+
+// ── Game Servers — Card Games / Bài ──────────────────────────────────────────
+include 'game:bacayServer'
+findProject(':game:bacayServer')?.name = 'bacayServer'
+
+include 'game:baicao'
+findProject(':game:baicao')?.name = 'baicao'
+
+include 'game:binh'
+findProject(':game:binh')?.name = 'binh'
+
+include 'game:lieng'
+findProject(':game:lieng')?.name = 'lieng'
+
+include 'game:poker'
+findProject(':game:poker')?.name = 'poker'
+
+include 'game:sam'
+findProject(':game:sam')?.name = 'sam'
+
+include 'game:tlmn'
+findProject(':game:tlmn')?.name = 'tlmn'
+
+include 'game:cotuong'
+findProject(':game:cotuong')?.name = 'cotuong'
+
+include 'game:xizach'
+findProject(':game:xizach')?.name = 'xizach'
+
+include 'game:xidzach'
+findProject(':game:xidzach')?.name = 'xidzach'
+
+// ── Game Servers — Slot / Mini ────────────────────────────────────────────────
+include 'game:slot'
+findProject(':game:slot')?.name = 'SlotMachine'
+
+include 'game:slot3x3'
+findProject(':game:slot3x3')?.name = 'slot3x3'
+
+include 'game:Minigame'
+findProject(':game:Minigame')?.name = 'Minigame'
+
+include 'game:kendo'
+findProject(':game:kendo')?.name = 'kendo'
+
+// ── Game Servers — Banca / ShootFish (.NET — xem server/banca/) ──────────────
+include 'game:banca'
+findProject(':game:banca')?.name = 'banca'
+
+// ── Test / Tools (không deploy production) ───────────────────────────────────
+include 'TestProject'

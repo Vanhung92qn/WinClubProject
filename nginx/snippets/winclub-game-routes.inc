@@ -3,6 +3,59 @@
 # Tune paths: /livestream/, h5live Origin/Referer if your product differs.
 # Source lineage: sites-available/vic68.win (trimmed; no server/ssl wrapper).
 
+    # ── API v1 Gateway (versioned, new clients) ──────────────────────────────
+    # Client: https://${DOMAIN}/api/v1  → VinPlayPortal (port 8081)
+    location /api/v1 {
+        proxy_pass http://127.0.0.1:8081/api;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_hide_header Access-Control-Allow-Origin;
+        add_header Access-Control-Allow-Origin "*" always;
+        add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Content-Type, Authorization, AccessToken" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+        if ($request_method = OPTIONS) { return 204; }
+    }
+
+    # Admin API (VinPlayBackend, port 8082)
+    location /api/v1/admin {
+        proxy_pass http://127.0.0.1:8082/api_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_hide_header Access-Control-Allow-Origin;
+        add_header Access-Control-Allow-Origin "*" always;
+        add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Content-Type, Authorization, AccessToken" always;
+        if ($request_method = OPTIONS) { return 204; }
+    }
+
+    # Board / Leaderboard (BoardService, port 8087)
+    location /api/v1/board {
+        proxy_pass http://127.0.0.1:8087;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        add_header Access-Control-Allow-Origin "*" always;
+        if ($request_method = OPTIONS) { return 204; }
+    }
+
+    # Payment (WSPay, port 18081)
+    location /api/v1/pay {
+        proxy_pass http://127.0.0.1:18081;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        add_header Access-Control-Allow-Origin "*" always;
+        if ($request_method = OPTIONS) { return 204; }
+    }
+
+    # ── Legacy route (giữ backward-compat cho client cũ) ─────────────────────
     location /api-portal {
         proxy_pass http://127.0.0.1:8081/api;
         proxy_set_header Host $host;

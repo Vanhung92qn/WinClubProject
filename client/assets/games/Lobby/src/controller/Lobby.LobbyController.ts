@@ -1,6 +1,6 @@
 import App from "../../../../scripts/common/App";
-import Http from "../../../../core/network/Http";
 import Configs from "../../../../scripts/common/Configs";
+import LobbyService from "../service/LobbyService";
 import MiniGameNetworkClient from "../../../../scripts/networks/MiniGameNetworkClient";
 import BroadcastReceiver from "../../../../scripts/common/BroadcastReceiver";
 import SPUtils from "../../../../scripts/common/SPUtils";
@@ -24,9 +24,7 @@ import MiniGame from "../../../../scripts/common/MiniGame";
 import LobbyLobbyController from "./Lobby.LobbyController";
 import ShopTabEnum from "../enum/ShopTabEnum";
 import GameConfigManager from "../../../../scripts/common/game/GameConfigManager";
-import ApiIDEnum from "../enum/ApiIDEnum";
 import LobbySystemMessage from "../Lobby.SystemMessage";
-import GameURL from "../../../../scripts/common/game/GameURL";
 import GameErrorMessage from "../../../../scripts/enum/GameErrorMessage";
 import BundleControl from "../../../../scripts/common/BundleControl";
 import PopupManager, { PopupTier } from "../../../../core/utils/PopupManager";
@@ -246,26 +244,8 @@ namespace Lobby {
             }
             App.instance.setButtonMiniGamesPosition(App.instance.originalMiniGamesButtonPosition);
 
-            Http.get(Configs.App.API, {"c": ApiIDEnum.GET_URL_LINK}, (err, res) => {
-                if(res.success) {
-                    if(res.md5) {
-                        GameURL.MD5_CHECKER = res.md5;
-                    }
-                    GameURL.GROUP_FACEBOOK = res.groupFacebook ? res.groupFacebook : "";
-                    GameURL.CSKH_TELEGRAM = res.teleCSKH ? res.teleCSKH : "";
-                    if(res.botTele && res.botTele.length > 0) {
-                        GameURL.BOT_TELEGRAM = res.botTele ?? "";
-                    }
-
-                    if(res.checkLocTele && res.checkLocTele.length > 0) {
-                        GameURL.CHECK_LOC_TELEGRAM = res.checkLocTele ?? "";
-                    }
-                    GameURL.FANPAGE = res.fanPage ? res.fanPage : "";
-                    GameURL.TELEGRAM_COMMUNITY = res.groupTele ? res.groupTele : "";
-                    GameURL.LIVE_CHAT = res.liveChat ? res.liveChat : "";
-                } else {
-                    App.instance.actShowThongBao(res.errorCode);
-                }
+            LobbyService.getUrlLinks((err) => {
+                if (err) App.instance.actShowThongBao(err.message);
             });
             this.actPlayAudioMain();
             BundleControl.loadBundle('CardLobby');
@@ -637,12 +617,8 @@ namespace Lobby {
         }
 
          gesecretCode(){
-            Http.get(Configs.App.API, { "c": 4015,"u":Configs.Login.Nickname }, (err, res) => {
-                // console.log(res);
-               if(res["ok"]==1){
-               // this.PopupCreateSecretcode.show();
-               }
-               this.thongbao = res["text2"];
+            LobbyService.getSystemNotice(Configs.Login.Nickname, (_err, text) => {
+                this.thongbao = text || "";
             });
         }
     
@@ -1449,14 +1425,7 @@ namespace Lobby {
                 return;
             }
 
-            Http.get(Configs.App.API, {"c" :4074, "t":49}, (err,json) => {
-                // if(this.isGameOff("banca", json)) {
-                //     this.actShowCommingSoon();
-                //     return;
-                // }
-                // App.instance.showLoading(false);
-
-                // App.instance.showLoading(false);
+            LobbyService.checkBancaAvailable((_err) => {
                 App.instance._selectGameNode = event.currentTarget;
                 App.instance.loadSceneInSubpackage("ShootFish", "ShootFish");
             })
@@ -1957,11 +1926,9 @@ namespace Lobby {
 
         loadListMail() {
             try {
-                Http.get(Configs.App.API, { "c": ApiIDEnum.GET_MAIL, "nn": Configs.Login.Nickname, "p": 0}, (err, res) => {
-                    if(res.success) {
-                        if(this.nodeUnreadMail) {
-                            this.nodeUnreadMail.active = res.mailNotRead != 0;
-                        }
+                LobbyService.getMailCount(Configs.Login.Nickname, (_err, mailNotRead) => {
+                    if(this.nodeUnreadMail) {
+                        this.nodeUnreadMail.active = (mailNotRead || 0) !== 0;
                     }
                 });
             } catch(ex) {
@@ -2093,16 +2060,11 @@ namespace Lobby {
         }
 
         getQuickOTPTelegram() {
-            let req = {
-                "c": ApiIDEnum.QUICK_OTP_TELEGRAM,
-                "nickname": Configs.Login.Nickname
-            };
-            Http.get(Configs.App.API, req, (err, res) => {
-                if(res.success) {
+            LobbyService.sendQuickOTP(Configs.Login.Nickname, (err, success) => {
+                if (success) {
                     App.instance.actShowThongBao(GameSuccessMessage.GET_OTP_SUCCESSFULLY);
-                    return;
                 } else {
-                    App.instance.alertDialog.showMsg(res.errorCode);
+                    App.instance.alertDialog.showMsg(err ? err.message : "Lỗi gửi OTP");
                 }
             });
         }

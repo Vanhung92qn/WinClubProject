@@ -1,7 +1,18 @@
-# WinClub Portal API Reference
+# WinClub API Reference
 
-**Endpoint:** `GET/POST /api?c={command_id}&{params}`
-**Protocol:** HTTPS qua Nginx reverse proxy (`https://sieuno.online/api-portal`)
+## Gateway Routes (Nginx)
+
+| Path | Backend | Port | Domain |
+|------|---------|:----:|--------|
+| `/api/v1` | VinPlayPortal | 8081 | User: login, register, profile, shop |
+| `/api/v1/admin` | VinPlayBackend | 8082 | Admin & Agent management |
+| `/api/v1/board` | BoardService | 8087 | Leaderboard, hotupdate |
+| `/api/v1/pay` | WSPay | 18081 | Payment processing |
+| `/api-portal` | VinPlayPortal | 8081 | **Legacy** — backward-compat, không thêm endpoints mới |
+
+**Format:** `GET https://sieuno.online/api/v1?c={command_id}&{params}`
+
+**Versioning policy:** Mọi endpoint mới dùng `/api/v1`. Client cũ (chưa update) vẫn dùng `/api-portal` — không xóa route đó cho đến khi 100% client đã update.
 
 ---
 
