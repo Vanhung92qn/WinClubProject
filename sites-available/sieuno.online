@@ -63,7 +63,7 @@ server {
 # Pool: /etc/php/8.3/fpm/pool.d/winclub-cms.conf (env DB_*, BASE_URL, API_URL — see cms/deploy/php-fpm-pool-cms.example.conf)
 # Legacy Node admin on :3002: switch location / back to proxy_pass if needed.
 server {
-    server_name adp.sieuno.online quantri.sieuno.online;
+    server_name adp.sieuno.online quantri.sieuno.online admin.sieuno.online;
 
     root /var/WinClubProject/cms;
     index index.php;
@@ -130,6 +130,6 @@ server {
 server {
     listen 80;
     listen [::]:80;
-    server_name sieuno.online www.sieuno.online play.sieuno.online adp.sieuno.online quantri.sieuno.online agent.sieuno.online;
+    server_name sieuno.online www.sieuno.online play.sieuno.online adp.sieuno.online quantri.sieuno.online admin.sieuno.online agent.sieuno.online;
     return 301 https://$host$request_uri;
 }

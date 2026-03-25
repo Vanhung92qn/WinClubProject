@@ -1,4 +1,5 @@
 import Configs from "../../scripts/common/Configs";
+import UserStore from "../store/UserStore";
 import Http from "../network/Http";
 import PortalPassword from "./PortalPassword";
 import SPUtils from "../../scripts/common/SPUtils";
@@ -116,6 +117,7 @@ export default class AuthService {
 
         App.instance.buttonMiniGame.hidden();
         BroadcastReceiver.send(BroadcastReceiver.USER_LOGOUT);
+        UserStore._notifyChange("logout");
     }
 
     // ── Internal ──
@@ -159,6 +161,7 @@ export default class AuthService {
         // 4. Show mini game button + notify UI
         App.instance.buttonMiniGame.show();
         BroadcastReceiver.send(BroadcastReceiver.USER_INFO_UPDATED);
+        UserStore._notifyChange("login");
     }
 }
 

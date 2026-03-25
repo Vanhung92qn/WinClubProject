@@ -1,23 +1,36 @@
-const {ccclass, property} = cc._decorator;
+const { ccclass, requireComponent } = cc._decorator;
 
 @ccclass
+@requireComponent(cc.Widget)
 export default class SafeArea extends cc.Component {
 
-    protected onLoad() {
-        if(!cc.sys.isNative) {
-            this.node.getComponent(cc.Canvas).fitHeight = true;
-            return;
+    onLoad() {
+        this.applySafeArea();
+        if (cc.view && cc.view.setResizeCallback) {
+            cc.view.setResizeCallback(() => this.applySafeArea());
         }
+    }
 
-        let ratio = cc.view.getFrameSize().width / cc.view.getFrameSize().height;
+    applySafeArea() {
+        let widget = this.getComponent(cc.Widget);
+        if (!widget) return;
 
-        if(ratio < 1.7) {
-            this.node.getComponent(cc.Canvas).fitWidth = true;
-            this.node.getComponent(cc.Canvas).fitHeight = false;
-        } else {
-            this.node.getComponent(cc.Canvas).fitWidth = false;
-            this.node.getComponent(cc.Canvas).fitHeight = true;
+        // Cocos Creator 2.x method
+        let safeArea = cc.sys.getSafeAreaRect();
+        let visibleSize = cc.view.getVisibleSize();
+
+        if (safeArea && (safeArea.width < visibleSize.width || safeArea.height < visibleSize.height)) {
+            widget.isAlignLeft = true;
+            widget.isAlignRight = true;
+            widget.isAlignTop = true;
+            widget.isAlignBottom = true;
+
+            widget.left = safeArea.x;
+            widget.right = visibleSize.width - (safeArea.x + safeArea.width);
+            widget.bottom = safeArea.y;
+            widget.top = visibleSize.height - (safeArea.y + safeArea.height);
+
+            widget.updateAlignment();
         }
-        let rect = cc.sys.getSafeAreaRect();
     }
 }
