@@ -105,35 +105,26 @@ public class TeleAuthentication extends TelegramLongPollingBot {
                 if (parts.length > 1) {
                     String nickname = parts[1];
                     String phone = getPhoneByNickname(nickname);
-                    if (u != null) {
-                        if (Objects.equals(u.getNickname(), nickname) && u.isActive()) {
-                            textMessage = "Tele đã liên kết với 1 tài khoản khác, hãy thử bằng 1 tele khác";
-                            sendPhoneAndOTPRequest(chatId, textMessage);
-                            return;
-                        }
+                    if (u != null && !Objects.equals(u.getNickname(), nickname) && u.isActive()) {
+                        textMessage = "Tele đã liên kết với tài khoản " + u.getNickname() + ", hãy thử bằng 1 tele khác";
+                        sendPhoneAndOTPRequest(chatId, textMessage);
+                        return;
                     }
-                    if (phone.isEmpty()) {
-                        textMessage = "Vui lòng xác thực số điện thoại để sử dụng dịch vụ";
-                        sendPhoneAndOTPRequest(chatId, textMessage);
+                    if (u == null) {
+                        saveUserInfo(nickname, chatId);
+                        u = getInfoByChatID(chatId);
+                    } else if (!Objects.equals(u.getNickname(), nickname)) {
+                        updateNickname(chatId, nickname);
+                    }
+                    if (u != null && u.isActive() && !u.getPhoneNumber().isEmpty() && !phone.isEmpty()) {
+                        String otp = generateOTP();
+                        saveOTP(chatId, otp);
+                        saveOTPPhone(chatId, otp);
+                        sendOTP(chatId, otp);
                     } else {
-                        if (u != null) {
-                            textMessage = "Xin chào " + u.getNickname();
-                        } else {
-                            textMessage = "Chào mừng " + message.getFrom().getFirstName() + " đến với hệ thống OTP miễn phí." + "\n" + "Để nhận OTP miễn phí vui lòng ấn nút 'Chia sẻ số điện thoại' bên dưới để xác thực tài khoản";
-                        }
+                        textMessage = "Chào mừng " + message.getFrom().getFirstName() + " đến với hệ thống OTP miễn phí."
+                                + "\n" + "Để nhận OTP miễn phí vui lòng ấn nút 'Chia sẻ số điện thoại' bên dưới để xác thực tài khoản";
                         sendPhoneAndOTPRequest(chatId, textMessage);
-                        UserTele userTele = getInfoByChatID(chatId);
-                        if (userTele == null) {
-                            saveUserInfo(nickname, chatId);
-                        } else if (userTele.getPhoneNumber().isEmpty() || !userTele.isActive()) {
-                            textMessage = "Chào mừng " + userTele.getNickname() + " đến với hệ thống OTP miễn phí." + "\n" + "Để nhận OTP miễn phí vui lòng ấn nút 'Chia sẻ số điện thoại' bên dưới để xác thực tài khoản";
-                            sendPhoneAndOTPRequest(chatId, textMessage);
-                        } else {
-                            String otp = generateOTP();
-                            saveOTP(chatId, otp);
-                            saveOTPPhone(chatId, otp);
-                            sendOTP(chatId, otp);
-                        }
                     }
                 } else {
                     processUser(u, chatId);
@@ -313,6 +304,15 @@ public class TeleAuthentication extends TelegramLongPollingBot {
         collection.insertOne(document);
     }
 
+    private void updateNickname(String chatId, String nickname) {
+        MongoDBConnectionFactory mongoDBConnectionFactory = ContextHolder.applicationContext.getBean(MongoDBConnectionFactory.class);
+        MongoDatabase db = mongoDBConnectionFactory.getDB();
+        MongoCollection<Document> collection = db.getCollection("user_tele");
+        Document filter = new Document("chatID", chatId);
+        Document updateDocument = new Document("$set", new Document("nickname", nickname).append("isActive", false).append("phoneNumber", ""));
+        collection.updateOne(filter, updateDocument);
+    }
+
     private void saveOTP(String chatId, String otp) {
         MongoDBConnectionFactory mongoDBConnectionFactory = ContextHolder.applicationContext.getBean(MongoDBConnectionFactory.class);
 
@@ -360,50 +360,26 @@ public class TeleAuthentication extends TelegramLongPollingBot {
             }
         }
         try {
-            SendMessage message = new SendMessage();
-            message.setChatId(chatId);
             UserTele userTele = getInfoByChatID(chatId);
-            String phone;
-            if (userTele != null) {
-                phone = getPhoneByNickname(userTele.getNickname());
-            } else {
-                try {
-                    message.setText("Vui lòng xác thực tele để sử dụng dịch vụ.");
-                    String traceId = RandomStringUtils.randomNumeric(10);
-                    System.out.println("Waiting TPS..." + traceId);
-                    if (blockingQueue.poll(10, TimeUnit.SECONDS) != null) {
-                        System.out.println("Send message " + traceId);
-                        message.setText("Vui lòng xác thực tele để sử dụng dịch vụ.");
-                        sendMessageToUser(message.getText(), chatId);
-                    } else {
-                        System.out.println("Send message timeout" + traceId);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            if (userTele == null) {
+                sendMessageToUser("Vui lòng ấn /start trong game trước khi chia sẻ số điện thoại.", chatId);
                 return;
             }
-            if (normalizePhoneNumber(phone).equals(normalizePhoneNumber(phoneNumber))) {
+            String storedPhone = getPhoneByNickname(userTele.getNickname());
+            if (storedPhone.isEmpty()) {
                 savePhone(chatId, phoneNumber);
                 String otp = generateOTP();
                 saveOTP(chatId, otp);
                 saveOTPPhone(userTele.getNickname(), otp, phoneNumber);
-                message.setText("Vui lòng xác thực tele để sử dụng dịch vụ.");
+                sendOTPActivePhone(chatId, otp);
+            } else if (normalizePhoneNumber(storedPhone).equals(normalizePhoneNumber(phoneNumber))) {
+                savePhone(chatId, phoneNumber);
+                String otp = generateOTP();
+                saveOTP(chatId, otp);
+                saveOTPPhone(userTele.getNickname(), otp, phoneNumber);
                 sendOTPActivePhone(chatId, otp);
             } else {
-                message.setText("Số điện thoại không khớp, vui lòng thử lại.");
-                try {
-                    String traceId = RandomStringUtils.randomNumeric(10);
-                    System.out.println("Waiting TPS..." + traceId);
-                    if (blockingQueue.poll(10, TimeUnit.SECONDS) != null) {
-                        System.out.println("Send message " + traceId);
-                        sendMessageToUser(message.getText(), chatId);
-                    } else {
-                        System.out.println("Send message timeout" + traceId);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                sendMessageToUser("Số điện thoại không khớp với tài khoản " + userTele.getNickname() + ", vui lòng thử lại.", chatId);
             }
         } catch (Exception e) {
             e.printStackTrace();
