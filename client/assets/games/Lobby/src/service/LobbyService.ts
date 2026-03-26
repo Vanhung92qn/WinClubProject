@@ -1,7 +1,7 @@
-import Configs from "../../../../../scripts/common/Configs";
-import Http from "../../../../../core/network/Http";
+import Configs from "../../../../scripts/common/Configs";
+import Http from "../../../../core/network/Http";
 import ApiIDEnum from "../enum/ApiIDEnum";
-import GameURL from "../../../../../scripts/common/game/GameURL";
+import GameURL from "../../../../scripts/common/game/GameURL";
 
 /**
  * LobbyService — thin HTTP layer cho Lobby screen.

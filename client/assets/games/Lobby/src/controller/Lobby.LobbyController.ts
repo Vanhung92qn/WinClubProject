@@ -18,7 +18,7 @@ import ShootFishNetworkClient from "../../../../scripts/networks/ShootFishNetwor
 import AudioManager from "../../../../scripts/common/Common.AudioManager";
 import {Tophudata} from '../Lobby.ItemTopHu';
 import TopHu from "../Lobby.TopHu";
-import PopupSecurityPhone from "../Lobby.PopupSecurityPhone";
+import PopupSecurityPhone from "../account/Lobby.PopupSecurityPhone";
 import nodeUtils from "../../../../scripts/common/NodeUtils";
 import MiniGame from "../../../../scripts/common/MiniGame";
 import LobbyLobbyController from "./Lobby.LobbyController";
