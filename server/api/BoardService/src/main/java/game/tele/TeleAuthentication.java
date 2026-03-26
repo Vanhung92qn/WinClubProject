@@ -355,10 +355,12 @@ public class TeleAuthentication extends TelegramLongPollingBot {
             }
             String storedPhone = getPhoneByNickname(userTele.getNickname());
             if (storedPhone.isEmpty()) {
-                sendMessageToUser("Vui lòng nhập số điện thoại trong game trước, sau đó quay lại chia sẻ SĐT ở đây.", chatId);
-                return;
-            }
-            if (normalizePhoneNumber(storedPhone).equals(normalizePhoneNumber(phoneNumber))) {
+                savePhone(chatId, phoneNumber);
+                String otp = generateOTP();
+                saveOTP(chatId, otp);
+                saveOTPPhone(userTele.getNickname(), otp, phoneNumber);
+                sendOTPActivePhone(chatId, otp);
+            } else if (normalizePhoneNumber(storedPhone).equals(normalizePhoneNumber(phoneNumber))) {
                 savePhone(chatId, phoneNumber);
                 String otp = generateOTP();
                 saveOTP(chatId, otp);

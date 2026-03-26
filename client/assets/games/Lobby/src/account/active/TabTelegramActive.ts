@@ -29,8 +29,6 @@ export default class TabTelegramActive extends cc.Component {
     @property(cc.Prefab)
     prefabPopupCancelTelegram: cc.Prefab = null;
 
-    private phoneNumber: string = "";
-
     protected onLoad() {
         this.showStep("phone");
         MiniGameNetworkClient.getInstance().addListener((data) => {
@@ -64,76 +62,97 @@ export default class TabTelegramActive extends cc.Component {
     private clearInputs() {
         if (this.edbPhoneNumber) this.edbPhoneNumber.string = "";
         if (this.edbOTP) this.edbOTP.string = "";
-        this.phoneNumber = "";
     }
 
+    private static normalizePhone(raw: string): string {
+        let phone = raw.replace(/[\s\-().]/g, "");
+        if (phone.startsWith("+84")) {
+            phone = "0" + phone.substring(3);
+        } else if (phone.startsWith("84") && phone.length >= 11) {
+            phone = "0" + phone.substring(2);
+        }
+        return phone;
+    }
+
+    /** stepPhone → btnXacNhan click event: chỉ validate + chuyển sang stepOTP, chưa gọi API */
     onSubmitPhone() {
-        let phone = this.edbPhoneNumber.string.trim();
-        if (phone.length === 0) {
+        let raw = this.edbPhoneNumber.string.trim();
+        if (raw.length === 0) {
             App.instance.actShowThongBao("Vui lòng nhập số điện thoại.");
             return;
         }
-        if (phone.length < 9 || phone.length > 11) {
+        let phone = TabTelegramActive.normalizePhone(raw);
+        if (phone.length < 9 || phone.length > 11 || !/^\d+$/.test(phone)) {
             App.instance.actShowThongBao("Số điện thoại không hợp lệ.");
             return;
         }
-
-        App.instance.showLoading2(true);
-        let params = {
-            "c": ApiIDEnum.GET_PHONE_OTP,
-            "phoneNumber": phone,
-            "at": Configs.Login.AccessToken
-        };
-        Http.get(Configs.App.API, params, (err, res) => {
-            App.instance.showLoading2(false);
-            if (err) {
-                App.instance.actShowThongBao("Lỗi kết nối, vui lòng thử lại.");
-                return;
-            }
-            if (!res.success) {
-                App.instance.actShowThongBao(res.errorCode);
-                return;
-            }
-            this.phoneNumber = phone;
-            this.showStep("otp");
-        });
+        this.edbPhoneNumber.string = phone;
+        this.showStep("otp");
     }
 
+    /** stepOTP → btn "Lấy OTP qua Telegram": mở bot link — ĐÃ ĐÚNG, không cần sửa */
     onChatBotTelegram() {
         cc.sys.openURL(`${GameURL.BOT_TELEGRAM}?start=${Configs.Login.Nickname}`);
     }
 
+    /**
+     * stepOTP → BtnXacNhan click event:
+     * 1. Lưu SĐT lên server (c=4123) — đây mới là lúc SĐT "chính thức"
+     * 2. Nếu OK → verify OTP (c=4124)
+     * 3. Nếu OK → activate + chuyển stepActivated
+     */
     onActiveTelegram() {
+        let phone = TabTelegramActive.normalizePhone(this.edbPhoneNumber.string.trim());
         let otp = this.edbOTP.string.trim();
+
         if (otp.length === 0) {
             App.instance.actShowThongBao("Vui lòng nhập mã OTP.");
             return;
         }
+        if (phone.length < 9) {
+            App.instance.actShowThongBao("Số điện thoại không hợp lệ, vui lòng quay lại sửa.");
+            return;
+        }
 
         App.instance.showLoading2(true);
-        let params = {
-            "c": ApiIDEnum.VERIFY_PHONE_OTP,
-            "nickname": Configs.Login.Nickname,
-            "otp": otp,
+
+        let savePhoneParams = {
+            "c": ApiIDEnum.GET_PHONE_OTP,
+            "phoneNumber": phone,
+            "at": Configs.Login.AccessToken
         };
-        Http.get(Configs.App.API, params, (err, res) => {
-            App.instance.showLoading2(false);
-            if (err) {
-                App.instance.actShowThongBao("Lỗi kết nối, vui lòng thử lại.");
+        Http.get(Configs.App.API, savePhoneParams, (err, res) => {
+            if (err || !res.success) {
+                App.instance.showLoading2(false);
+                App.instance.actShowThongBao(res ? res.errorCode : "Lỗi kết nối, vui lòng thử lại.");
                 return;
             }
-            if (!res.success) {
-                App.instance.actShowThongBao(res.errorCode);
-                return;
-            }
-            if (res.errorCode === "OK") {
-                App.instance.actShowThongBao("Kích hoạt bảo mật Telegram thành công!");
-                BroadcastReceiver.send(BroadcastReceiver.USER_INFO_UPDATED);
-                this.showStep("activated");
-            }
+
+            let verifyParams = {
+                "c": ApiIDEnum.VERIFY_PHONE_OTP,
+                "nickname": Configs.Login.Nickname,
+                "otp": otp,
+            };
+            Http.get(Configs.App.API, verifyParams, (err2, res2) => {
+                App.instance.showLoading2(false);
+                if (err2) {
+                    App.instance.actShowThongBao("Lỗi kết nối, vui lòng thử lại.");
+                    return;
+                }
+                if (!res2.success) {
+                    App.instance.actShowThongBao(res2.errorCode);
+                    return;
+                }
+                if (res2.errorCode === "OK") {
+                    App.instance.actShowThongBao("Kích hoạt bảo mật Telegram thành công!");
+                    BroadcastReceiver.send(BroadcastReceiver.USER_INFO_UPDATED);
+                    this.showStep("activated");
+                }
+            });
         });
     }
 
+    /** stepOTP → quay lại sửa SĐT */
     onBackToPhone() {
         this.showStep("phone");
         if (this.edbOTP) this.edbOTP.string = "";
