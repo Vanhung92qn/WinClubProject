@@ -121,27 +121,32 @@ public class TeleAuthentication extends TelegramLongPollingBot {
 
     private void handleStart(Message message, String chatId, UserTele u) {
         String[] parts = message.getText().split("\\s+");
-        if (parts.length <= 1) {
-            handleResendOTP(chatId, u);
+        String nickname = null;
+
+        if (parts.length > 1) {
+            nickname = parts[1];
+        } else if (u != null) {
+            nickname = u.getNickname();
+        }
+
+        if (nickname == null || nickname.isEmpty()) {
+            sendMessageToUser("Vui lòng mở link từ game để kích hoạt.", chatId);
             return;
         }
-        String nickname = parts[1];
-        String phone = getPhoneByNickname(nickname);
+
         if (u != null && !Objects.equals(u.getNickname(), nickname) && u.isActive()) {
             sendMessageToUser("Telegram này đã liên kết với tài khoản " + u.getNickname() + ". Hãy dùng Telegram khác.", chatId);
             return;
         }
+
         if (u == null) {
             saveUserInfo(nickname, chatId);
         } else if (!Objects.equals(u.getNickname(), nickname)) {
             updateNickname(chatId, nickname);
         }
-        if (phone.isEmpty()) {
-            sendMessageToUser("Xin chào " + nickname + "!\nVui lòng nhập số điện thoại trong game trước, sau đó quay lại đây ấn 'Chia sẻ số điện thoại' để nhận OTP.", chatId);
-            sendPhoneAndOTPRequest(chatId, "Nếu đã nhập SĐT trong game, hãy ấn nút bên dưới:");
-            return;
-        }
-        sendPhoneAndOTPRequest(chatId, "Xin chào " + nickname + "!\nVui lòng ấn 'Chia sẻ số điện thoại' để xác thực và nhận mã OTP.");
+
+        sendPhoneAndOTPRequest(chatId,
+                "Chào mừng " + nickname + " đến với hệ thống OTP!\nVui lòng ấn nút 'Gửi số điện thoại' bên dưới để xác thực tài khoản!");
     }
 
     private void handleResendOTP(String chatId, UserTele u) {
@@ -149,13 +154,8 @@ public class TeleAuthentication extends TelegramLongPollingBot {
             sendMessageToUser("Vui lòng mở link từ game để kích hoạt.", chatId);
             return;
         }
-        String phone = getPhoneByNickname(u.getNickname());
-        if (phone.isEmpty()) {
-            sendMessageToUser("Vui lòng nhập số điện thoại trong game trước.", chatId);
-            return;
-        }
-        if (!u.isActive() || u.getPhoneNumber() == null || u.getPhoneNumber().isEmpty()) {
-            sendPhoneAndOTPRequest(chatId, "Vui lòng ấn 'Chia sẻ số điện thoại' để xác thực.");
+        if (u.getPhoneNumber() == null || u.getPhoneNumber().isEmpty()) {
+            sendPhoneAndOTPRequest(chatId, "Vui lòng ấn 'Gửi số điện thoại' để nhận OTP.");
             return;
         }
         String otp = generateOTP();
@@ -169,7 +169,7 @@ public class TeleAuthentication extends TelegramLongPollingBot {
 
             JSONArray keyboard = new JSONArray();
             JSONObject phoneButton = new JSONObject();
-            phoneButton.put("text", "Chia sẻ số điện thoại");
+            phoneButton.put("text", "Gửi số điện thoại");
             phoneButton.put("request_contact", true);
             JSONArray phoneRow = new JSONArray();
             phoneRow.put(phoneButton);
@@ -353,22 +353,18 @@ public class TeleAuthentication extends TelegramLongPollingBot {
                 sendMessageToUser("Vui lòng mở link kích hoạt từ game trước.", chatId);
                 return;
             }
+
             String storedPhone = getPhoneByNickname(userTele.getNickname());
-            if (storedPhone.isEmpty()) {
-                savePhone(chatId, phoneNumber);
-                String otp = generateOTP();
-                saveOTP(chatId, otp);
-                saveOTPPhone(userTele.getNickname(), otp, phoneNumber);
-                sendOTPActivePhone(chatId, otp);
-            } else if (normalizePhoneNumber(storedPhone).equals(normalizePhoneNumber(phoneNumber))) {
-                savePhone(chatId, phoneNumber);
-                String otp = generateOTP();
-                saveOTP(chatId, otp);
-                saveOTPPhone(userTele.getNickname(), otp, phoneNumber);
-                sendOTPActivePhone(chatId, otp);
-            } else {
+            if (!storedPhone.isEmpty() && !normalizePhoneNumber(storedPhone).equals(normalizePhoneNumber(phoneNumber))) {
                 sendMessageToUser("Số điện thoại không khớp với SĐT đã đăng ký trong game (" + userTele.getNickname() + ").\nVui lòng dùng đúng SĐT đã nhập trong game.", chatId);
+                return;
             }
+
+            savePhone(chatId, phoneNumber);
+            String otp = generateOTP();
+            saveOTP(chatId, otp);
+            saveOTPPhone(userTele.getNickname(), otp, phoneNumber);
+            sendOTPActivePhone(chatId, otp);
         } catch (Exception e) {
             e.printStackTrace();
         }

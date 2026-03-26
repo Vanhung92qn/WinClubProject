@@ -74,7 +74,11 @@ export default class TabTelegramActive extends cc.Component {
         return phone;
     }
 
-    /** stepPhone → btnXacNhan click event: chỉ validate + chuyển sang stepOTP, chưa gọi API */
+    /**
+     * stepPhone → btnXacNhan:
+     * Validate + normalize SĐT → gọi c=4123 lưu lên server → chuyển stepOTP
+     * SĐT phải được lưu TRƯỚC khi mở bot lấy OTP
+     */
     onSubmitPhone() {
         let raw = this.edbPhoneNumber.string.trim();
         if (raw.length === 0) {
@@ -87,72 +91,68 @@ export default class TabTelegramActive extends cc.Component {
             return;
         }
         this.edbPhoneNumber.string = phone;
-        this.showStep("otp");
+
+        App.instance.showLoading2(true);
+        let params = {
+            "c": ApiIDEnum.GET_PHONE_OTP,
+            "phoneNumber": phone,
+            "at": Configs.Login.AccessToken
+        };
+        Http.get(Configs.App.API, params, (err, res) => {
+            App.instance.showLoading2(false);
+            if (err) {
+                App.instance.actShowThongBao("Lỗi kết nối, vui lòng thử lại.");
+                return;
+            }
+            if (!res.success) {
+                App.instance.actShowThongBao(res.errorCode || "Lỗi lưu SĐT.");
+                return;
+            }
+            this.showStep("otp");
+        });
     }
 
-    /** stepOTP → btn "Lấy OTP qua Telegram": mở bot link — ĐÃ ĐÚNG, không cần sửa */
+    /** stepOTP → btn "Lấy OTP": mở bot Telegram để lấy OTP */
     onChatBotTelegram() {
         cc.sys.openURL(`${GameURL.BOT_TELEGRAM}?start=${Configs.Login.Nickname}`);
     }
 
     /**
-     * stepOTP → BtnXacNhan click event:
-     * 1. Lưu SĐT lên server (c=4123) — đây mới là lúc SĐT "chính thức"
-     * 2. Nếu OK → verify OTP (c=4124)
-     * 3. Nếu OK → activate + chuyển stepActivated
+     * stepOTP → BtnXacNhan:
+     * CHỈ gọi c=4124 verify OTP (SĐT đã được lưu ở bước trước)
      */
     onActiveTelegram() {
-        let phone = TabTelegramActive.normalizePhone(this.edbPhoneNumber.string.trim());
         let otp = this.edbOTP.string.trim();
-
         if (otp.length === 0) {
             App.instance.actShowThongBao("Vui lòng nhập mã OTP.");
             return;
         }
-        if (phone.length < 9) {
-            App.instance.actShowThongBao("Số điện thoại không hợp lệ, vui lòng quay lại sửa.");
-            return;
-        }
 
         App.instance.showLoading2(true);
-
-        let savePhoneParams = {
-            "c": ApiIDEnum.GET_PHONE_OTP,
-            "phoneNumber": phone,
-            "at": Configs.Login.AccessToken
+        let params = {
+            "c": ApiIDEnum.VERIFY_PHONE_OTP,
+            "nickname": Configs.Login.Nickname,
+            "otp": otp,
         };
-        Http.get(Configs.App.API, savePhoneParams, (err, res) => {
-            if (err || !res.success) {
-                App.instance.showLoading2(false);
-                App.instance.actShowThongBao(res ? res.errorCode : "Lỗi kết nối, vui lòng thử lại.");
+        Http.get(Configs.App.API, params, (err, res) => {
+            App.instance.showLoading2(false);
+            if (err) {
+                App.instance.actShowThongBao("Lỗi kết nối, vui lòng thử lại.");
                 return;
             }
-
-            let verifyParams = {
-                "c": ApiIDEnum.VERIFY_PHONE_OTP,
-                "nickname": Configs.Login.Nickname,
-                "otp": otp,
-            };
-            Http.get(Configs.App.API, verifyParams, (err2, res2) => {
-                App.instance.showLoading2(false);
-                if (err2) {
-                    App.instance.actShowThongBao("Lỗi kết nối, vui lòng thử lại.");
-                    return;
-                }
-                if (!res2.success) {
-                    App.instance.actShowThongBao(res2.errorCode);
-                    return;
-                }
-                if (res2.errorCode === "OK") {
-                    App.instance.actShowThongBao("Kích hoạt bảo mật Telegram thành công!");
-                    BroadcastReceiver.send(BroadcastReceiver.USER_INFO_UPDATED);
-                    this.showStep("activated");
-                }
-            });
+            if (!res.success) {
+                App.instance.actShowThongBao(res.errorCode || "Mã OTP không đúng.");
+                return;
+            }
+            if (res.errorCode === "OK") {
+                App.instance.actShowThongBao("Kích hoạt bảo mật Telegram thành công!");
+                BroadcastReceiver.send(BroadcastReceiver.USER_INFO_UPDATED);
+                this.showStep("activated");
+            }
         });
     }
 
-    /** stepOTP → quay lại sửa SĐT */
+    /** stepOTP → quay lại sửa SĐT (SĐT sẽ được lưu lại khi ấn Xác nhận lần nữa) */
     onBackToPhone() {
         this.showStep("phone");
         if (this.edbOTP) this.edbOTP.string = "";

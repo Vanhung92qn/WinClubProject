@@ -7,16 +7,18 @@
 ### 2026-03-26 — Redesign Telegram OTP: 3-step flow (Phone → OTP → Activated)
 
 - **Vấn đề cũ:** Step1 chỉ có ô nhập OTP, không có nhập SĐT → server không biết SĐT thuộc user nào → bot Telegram kẹt dead-end. System cũ yêu cầu đăng ký SĐT qua SMS trước, nhưng giờ dùng Telegram only.
-- **Thiết kế mới — 3 bước:**
-  1. **stepPhone** (game): User nhập SĐT → `c=4123` (ActivePhoneProcessor) lưu vào `user_phone` (MongoDB)
-  2. **stepOTP** (game + Telegram): User ấn "Lấy OTP" → mở bot `?start={nickname}` → Telegram hỏi "Chia sẻ SĐT" → bot so sánh contact với `user_phone` → khớp → tạo OTP 6 số → gửi qua chat → user nhập OTP trong game → `c=4124` (CheckOtpPhoneProcessor) verify + activate cả `user_tele` + `user_phone`
-  3. **stepActivated** (game): Hiển thị trạng thái đã kích hoạt + nút hủy
-- **Bảo mật kép:** SĐT nhập trong game (step1) PHẢI khớp SĐT Telegram contact sharing (step2). Telegram đã verify SĐT khi đăng ký Telegram → tin cậy.
+- **BUG CRITICAL đã fix:** `ActivePhoneProcessor` (c=4123) reset OTP="" mỗi khi save phone → nếu gọi c=4123 cùng lúc c=4124 thì OTP bị xoá trước khi verify → LUÔN FAIL.
+- **Thiết kế mới — 3 bước (thứ tự quan trọng):**
+  1. **stepPhone** (game): User nhập SĐT → normalize (+84/0) → ấn "Xác nhận" → `c=4123` (ActivePhoneProcessor) lưu vào `user_phone` (MongoDB). **PHẢI lưu TRƯỚC khi mở bot.**
+  2. **stepOTP** (game + Telegram): User ấn "Lấy OTP" → mở bot `?start={nickname}` → bot gửi nút "Gửi số điện thoại" → user share contact → bot check SĐT khớp `user_phone` → khớp → tạo OTP 6 số → lưu `user_phone` + `user_tele` → gửi OTP qua chat. Nếu `user_phone` trống (chưa qua step1), bot vẫn accept contact + save + send OTP.
+  3. User nhập OTP trong game → ấn "Xác nhận" → **CHỈ gọi `c=4124`** (CheckOtpPhoneProcessor) verify OTP → activate → stepActivated.
+- **Lý do thứ tự:** c=4123 xoá OTP khi save phone (do `saveUserPhone`/`updateUserPhone` set `otp=""`), nên bot PHẢI sinh OTP SAU khi c=4123 đã chạy. c=4124 chỉ verify, không touch phone.
+- **Bot Telegram đơn giản hoá (kiểu BAY789):** `/start {nickname}` → welcome + nút "Gửi số điện thoại" → share contact → gửi OTP ngay. Không block bằng check `user_phone` trống.
 - **Cross-platform:** Hoạt động trên Mobile (deep link), Desktop (Telegram Desktop), Web (t.me link) — bot link là URL universal.
-- **Server** (`TeleAuthentication.java`): Rewrite `onUpdateReceived` — tách `handleStart`, `handleResendOTP`. `/start {nickname}`: luôn tạo `user_tele`, check `user_phone` → nếu trống yêu cầu nhập SĐT trong game trước. `handlePhoneNumber`: so sánh contact với `user_phone` → khớp → OTP.
-- **Client** (`TabTelegramActive.ts`): Rewrite 3-step flow. Properties mới: `stepPhone`, `stepOTP`, `stepActivated`, `edbPhoneNumber`. Gọi `c=4123` lưu SĐT, `c=4124` verify OTP. Reset state trong `onEnable()`.
+- **Server** (`TeleAuthentication.java`): `handleStart` — save user_tele + hiện welcome. `handlePhoneNumber` — nếu user_phone có SĐT khác → báo lỗi; còn lại (trống hoặc khớp) → save + OTP + send ngay. `handleResendOTP` — nếu có phone trong user_tele → gen OTP mới.
+- **Client** (`TabTelegramActive.ts`): `onSubmitPhone()` validate + normalize + gọi c=4123 → stepOTP. `onChatBotTelegram()` mở bot link. `onActiveTelegram()` CHỈ gọi c=4124. `onBackToPhone()` quay lại sửa SĐT.
 - **Client** (`PopupSecurityPhone.ts`): Thêm `resetPanelState()` trong `show()` — fix bug panel OTP hiện trước panel SĐT khi popup SMS mở lần 2+.
-- **⚠️ Prefab cần update trong Cocos Creator:** `PopupTelegramSecurity.prefab` — đổi `step1` → `stepPhone` (thêm EditBox SĐT + nút "Tiếp tục"), thêm node `stepOTP` (EditBox OTP + nút "Lấy OTP" + nút "Xác nhận"), đổi `step2` → `stepActivated`. Xem chi tiết: [`KIENTRUC.md`](./KIENTRUC.md) hoặc comment trong `TabTelegramActive.ts`.
+- **⚠️ Prefab cần update trong Cocos Creator:** `PopupTelegramSecurity.prefab` — đổi `step1` → `stepPhone` (thêm EditBox SĐT + nút "Xác nhận" trỏ `onSubmitPhone`), thêm node `stepOTP` (EditBox OTP + nút "Lấy OTP" trỏ `onChatBotTelegram` + nút "Xác nhận" trỏ `onActiveTelegram` + nút "Quay lại" trỏ `onBackToPhone`), đổi `step2` → `stepActivated`.
 
 ### 2026-03-22 — Kiến trúc Client: Lazy Loading + Tổ chức thư mục core/
 
