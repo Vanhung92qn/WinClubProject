@@ -200,14 +200,17 @@ export default class BundleControl {
 
     /**
      * Release an entire game bundle and remove it from asset manager.
-     * Call when navigating back from a game to Lobby to free memory.
+     * Call ONLY after EVENT_AFTER_SCENE_LAUNCH (old scene destroyed) to avoid
+     * corrupting the Cocos UUID import table while game assets are still in use.
      */
     static releaseGameBundle(bundleName: string): void {
         let bundle = cc.assetManager.getBundle(bundleName);
-        if (bundle) {
-            bundle.releaseAll();
-            cc.assetManager.removeBundle(bundle);
-            console.log(`[BundleControl] Released game bundle: ${bundleName}`);
-        }
+        if (!bundle) return;
+        // removeBundle() unregisters the bundle from the registry.
+        // Assets loaded from it will be GC'd by Cocos when ref-count drops to 0.
+        // Do NOT call bundle.releaseAll() — it aggressively removes UUID entries
+        // from the global import table which can break asset loading in other bundles.
+        cc.assetManager.removeBundle(bundle);
+        console.log(`[BundleControl] Released game bundle: ${bundleName}`);
     }
 }

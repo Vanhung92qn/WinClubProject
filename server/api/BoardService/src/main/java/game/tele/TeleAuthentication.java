@@ -39,6 +39,12 @@ import java.util.concurrent.*;
 public class TeleAuthentication extends TelegramLongPollingBot {
 
     private static final String TELEGRAM_API_URL = "https://api.telegram.org/bot8684178141:AAEFo8e2Nx-S_3h4vdcbGZjfuMuRaOS5aEI/sendMessage";
+    private static final String GAME_NAME = "WINCLUB";
+    private static final String GAME_LINK = "https://play.sieuno.online/";
+
+    private static final String BTN_SEND_PHONE = "\uD83D\uDCF1 Gui so dien thoai";
+    private static final String BTN_GET_OTP    = "\uD83D\uDD10 Lay ma OTP";
+
     private final OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(3, TimeUnit.SECONDS)
             .writeTimeout(3, TimeUnit.SECONDS)
@@ -58,7 +64,6 @@ public class TeleAuthentication extends TelegramLongPollingBot {
 
     @PostConstruct
     public void init() {
-        // init rate limit
         rateLimitScheduler.scheduleAtFixedRate(() -> {
             for (int i = 0; i < RATE_LIMIT; i++) {
                 if (blockingQueue.size() == RATE_LIMIT) {
@@ -68,7 +73,6 @@ public class TeleAuthentication extends TelegramLongPollingBot {
             }
         }, 0, 1, TimeUnit.SECONDS);
 
-        // init message queue
         for (int i = 0; i < THREAD_POOL_SIZE; i++) {
             messageScheduler.execute(() -> {
                 TeleMessageProcess messageProcess;
@@ -92,6 +96,8 @@ public class TeleAuthentication extends TelegramLongPollingBot {
         }
     }
 
+    // ======================== DISPATCHER ========================
+
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
@@ -99,17 +105,18 @@ public class TeleAuthentication extends TelegramLongPollingBot {
             String chatId = message.getChatId().toString();
             UserTele u = getInfoByChatID(chatId);
             String text = message.getText();
+
             if (text.contains("/start")) {
                 handleStart(message, chatId, u);
-            }
-            if ("Lấy lại mã kích hoạt".equals(message.getText())) {
-                handleResendOTP(chatId, u);
+            } else if (text.equals(BTN_GET_OTP) || text.contains("Lay ma OTP") || text.contains("LAY MA OTP")
+                    || text.equals("Lấy lại mã kích hoạt") || text.equals("LAY LAI MA OTP")) {
+                handleGetOTP(chatId, u);
             }
         } else if (update.hasCallbackQuery()) {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             String chatId = callbackQuery.getMessage().getChatId().toString();
             if ("get_otp".equals(callbackQuery.getData())) {
-                handleResendOTP(chatId, getInfoByChatID(chatId));
+                handleGetOTP(chatId, getInfoByChatID(chatId));
             }
         } else if (update.hasMessage() && update.getMessage().hasContact()) {
             Contact contact = update.getMessage().getContact();
@@ -118,6 +125,8 @@ public class TeleAuthentication extends TelegramLongPollingBot {
             handlePhoneNumber(chatId, phoneNumber);
         }
     }
+
+    // ======================== HANDLERS ========================
 
     private void handleStart(Message message, String chatId, UserTele u) {
         String[] parts = message.getText().split("\\s+");
@@ -130,67 +139,201 @@ public class TeleAuthentication extends TelegramLongPollingBot {
         }
 
         if (nickname == null || nickname.isEmpty()) {
-            sendMessageToUser("Vui lòng mở link từ game để kích hoạt.", chatId);
+            sendTextMessage(chatId,
+                    brandHeader()
+                            + "Vui lòng mở link kích hoạt từ game.\n"
+                            + brandFooter());
             return;
         }
 
         if (u != null && !Objects.equals(u.getNickname(), nickname) && u.isActive()) {
-            sendMessageToUser("Telegram này đã liên kết với tài khoản " + u.getNickname() + ". Hãy dùng Telegram khác.", chatId);
+            sendTextMessage(chatId,
+                    brandHeader()
+                            + "Telegram này đã liên kết với tài khoản <b>" + u.getNickname() + "</b>.\n"
+                            + "Vui lòng sử dụng Telegram khác.\n"
+                            + brandFooter());
             return;
         }
 
         if (u == null) {
             saveUserInfo(nickname, chatId);
+            u = getInfoByChatID(chatId);
         } else if (!Objects.equals(u.getNickname(), nickname)) {
             updateNickname(chatId, nickname);
+            u = getInfoByChatID(chatId);
         }
 
-        sendPhoneAndOTPRequest(chatId,
-                "Chào mừng " + nickname + " đến với hệ thống OTP!\nVui lòng ấn nút 'Gửi số điện thoại' bên dưới để xác thực tài khoản!");
+        if (u != null && u.isActive()) {
+            sendActivatedMenu(chatId, nickname);
+        } else {
+            sendActivationMenu(chatId,
+                    brandHeader()
+                            + "Xin Chào <b>" + nickname + "</b>!\n\n"
+                            + "Để kích hoạt bảo mật tài khoản, vui lòng:\n"
+                            + "1. Nhấn nút <b>'" + BTN_SEND_PHONE + "'</b> bên dưới\n"
+                            + "2. Chia sẻ số điện thoại để nhận mã OTP\n"
+                            + "3. Nhập OTP vào game để hoàn tất\n\n"
+                            + brandFooter());
+        }
     }
 
-    private void handleResendOTP(String chatId, UserTele u) {
+    /**
+     * Unified OTP handler — works for both activation resend and transaction OTP
+     */
+    private void handleGetOTP(String chatId, UserTele u) {
         if (u == null) {
-            sendMessageToUser("Vui lòng mở link từ game để kích hoạt.", chatId);
+            sendTextMessage(chatId,
+                    brandHeader()
+                            + "Vui lòng mở link từ game để kích hoạt.\n"
+                            + brandFooter());
             return;
         }
-        if (u.getPhoneNumber() == null || u.getPhoneNumber().isEmpty()) {
-            sendPhoneAndOTPRequest(chatId, "Vui lòng ấn 'Gửi số điện thoại' để nhận OTP.");
+
+        if (!u.isActive()) {
+            if (u.getPhoneNumber() == null || u.getPhoneNumber().isEmpty()) {
+                sendActivationMenu(chatId,
+                        brandHeader()
+                                + "Bạn chưa xác thực số điện thoại.\n"
+                                + "Vui lòng nhấn <b>'" + BTN_SEND_PHONE + "'</b> trước.\n"
+                                + brandFooter());
+            } else {
+                String otp = generateOTP();
+                saveOTP(chatId, otp);
+                saveOTPPhone(u.getNickname(), otp, u.getPhoneNumber());
+                sendActivationOTP(chatId, otp);
+            }
             return;
         }
+
         String otp = generateOTP();
         saveOTP(chatId, otp);
         saveOTPPhone(u.getNickname(), otp, u.getPhoneNumber());
-        sendOTP(chatId, otp);
+        sendTransactionOTP(chatId, otp);
     }
 
-    private void sendPhoneAndOTPRequest(String chatId, String text) {
-        TeleMessageProcess messageProcess = () -> {
+    private void handlePhoneNumber(String chatId, String phoneNumber) {
+        if (phoneNumber != null) {
+            phoneNumber = phoneNumber.trim();
+            if (phoneNumber.startsWith("+")) {
+                phoneNumber = phoneNumber.replace("+", "");
+            }
+        }
+        try {
+            UserTele userTele = getInfoByChatID(chatId);
+            if (userTele == null) {
+                sendTextMessage(chatId,
+                        brandHeader()
+                                + "Vui long mo link kich hoat tu game truoc.\n"
+                                + brandFooter());
+                return;
+            }
 
-            JSONArray keyboard = new JSONArray();
-            JSONObject phoneButton = new JSONObject();
-            phoneButton.put("text", "Gửi số điện thoại");
-            phoneButton.put("request_contact", true);
-            JSONArray phoneRow = new JSONArray();
-            phoneRow.put(phoneButton);
-            JSONObject otpButton = new JSONObject();
-            otpButton.put("text", "Lấy lại mã kích hoạt");
-            JSONArray otpRow = new JSONArray();
-            otpRow.put(otpButton);
-            keyboard.put(phoneRow);
-            keyboard.put(otpRow);
+            if (userTele.isActive()) {
+                sendActivatedMenu(chatId, userTele.getNickname());
+                return;
+            }
+
+            String storedPhone = getPhoneByNickname(userTele.getNickname());
+            if (!storedPhone.isEmpty() && !normalizePhoneNumber(storedPhone).equals(normalizePhoneNumber(phoneNumber))) {
+                sendTextMessage(chatId,
+                        brandHeader()
+                                + "So dien thoai khong khop voi SDT da dang ky trong game (<b>" + userTele.getNickname() + "</b>).\n"
+                                + "Vui long dung dung SDT da nhap trong game.\n"
+                                + brandFooter());
+                return;
+            }
+
+            savePhone(chatId, phoneNumber);
+            String otp = generateOTP();
+            saveOTP(chatId, otp);
+            saveOTPPhone(userTele.getNickname(), otp, phoneNumber);
+            sendActivationOTP(chatId, otp);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ======================== UI: KEYBOARDS & MESSAGES ========================
+
+    private String brandHeader() {
+        return "============================\n"
+                + "      \uD83C\uDFAE <b>" + GAME_NAME + "</b> \uD83C\uDFAE\n"
+                + "         Game Chính Hãng\n"
+                + "============================\n\n";
+    }
+
+    private String brandFooter() {
+        return "\n\uD83C\uDF10 " + GAME_LINK;
+    }
+
+    /** Keyboard for unactivated users — share phone button */
+    private void sendActivationMenu(String chatId, String text) {
+        JSONArray keyboard = new JSONArray();
+
+        JSONObject phoneButton = new JSONObject();
+        phoneButton.put("text", BTN_SEND_PHONE);
+        phoneButton.put("request_contact", true);
+        keyboard.put(new JSONArray().put(phoneButton));
+
+        sendKeyboardMessage(chatId, text, keyboard);
+    }
+
+    /** Keyboard for activated users — get OTP button */
+    private void sendActivatedMenu(String chatId, String nickname) {
+        String text = brandHeader()
+                + "\u2705 Tài khoản <b>" + nickname + "</b> đã được bảo mật!\n\n"
+                + "Nhấn <b>'" + BTN_GET_OTP + "'</b> khi cần mã OTP giao dịch.\n"
+                + brandFooter();
+
+        JSONArray keyboard = new JSONArray();
+
+        JSONObject otpButton = new JSONObject();
+        otpButton.put("text", BTN_GET_OTP);
+        keyboard.put(new JSONArray().put(otpButton));
+
+        sendKeyboardMessage(chatId, text, keyboard);
+    }
+
+    private void sendActivationOTP(String chatId, String otp) {
+        String text = brandHeader()
+                + "\uD83D\uDCE9 <b>MA KICH HOAT</b>\n\n"
+                + "\uD83D\uDD11 Ma OTP: <code>" + otp + "</code>\n"
+                + "\u23F0 Hieu luc: 5 phut\n\n"
+                + "Nhap ma OTP trong game de hoan tat kich hoat bao mat.\n"
+                + brandFooter();
+        sendTextMessage(chatId, text);
+    }
+
+    private void sendTransactionOTP(String chatId, String otp) {
+        String text = brandHeader()
+                + "\uD83D\uDCB0 <b>MA OTP GIAO DICH</b>\n\n"
+                + "\uD83D\uDD11 Ma OTP: <code>" + otp + "</code>\n"
+                + "\u23F0 Hieu luc: 5 phut\n\n"
+                + "Nhap ma OTP trong game de xac nhan giao dich.\n"
+                + "Khong chia se ma nay voi bat ky ai!\n"
+                + brandFooter();
+        sendTextMessage(chatId, text);
+    }
+
+    // ======================== LOW-LEVEL TELEGRAM API ========================
+
+    private void sendKeyboardMessage(String chatId, String text, JSONArray keyboard) {
+        TeleMessageProcess messageProcess = () -> {
             JSONObject replyMarkup = new JSONObject();
             replyMarkup.put("keyboard", keyboard);
             replyMarkup.put("resize_keyboard", true);
+            replyMarkup.put("one_time_keyboard", false);
+
             JSONObject jsonBody = new JSONObject();
             jsonBody.put("chat_id", chatId);
             jsonBody.put("text", text);
+            jsonBody.put("parse_mode", "HTML");
             jsonBody.put("reply_markup", replyMarkup);
+
             RequestBody body = RequestBody.create(
                     MediaType.get("application/json; charset=utf-8"),
                     jsonBody.toString()
             );
-
             Request request = new Request.Builder()
                     .url(TELEGRAM_API_URL)
                     .post(body)
@@ -203,7 +346,7 @@ public class TeleAuthentication extends TelegramLongPollingBot {
                     System.out.println("Send message..." + traceId);
                     response = client.newCall(request).execute();
                 } else {
-                    System.out.println("Send message timeout" + traceId);
+                    System.out.println("Send message timeout " + traceId);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -217,6 +360,37 @@ public class TeleAuthentication extends TelegramLongPollingBot {
         messageQueue.add(messageProcess);
     }
 
+    public void sendTextMessage(String chatId, String text) {
+        TeleMessageProcess messageProcess = () -> {
+            Response response = null;
+            try {
+                OkHttpClient httpClient = HttpCommon.getInstance().getHttpClient().newBuilder()
+                        .connectTimeout(3, TimeUnit.SECONDS)
+                        .readTimeout(3, TimeUnit.SECONDS)
+                        .build();
+                Request request = new Request.Builder()
+                        .url(TELEGRAM_API_URL + "?text=" + encodeValue(text)
+                                + "&chat_id=" + chatId + "&parse_mode=HTML")
+                        .method("GET", null)
+                        .build();
+                response = httpClient.newCall(request).execute();
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (response != null) {
+                    response.close();
+                }
+            }
+        };
+        messageQueue.add(messageProcess);
+    }
+
+    // keep old name for external callers
+    public void sendMessageToUser(String message, String chatId) {
+        sendTextMessage(chatId, message);
+    }
+
+    // ======================== DATABASE ========================
 
     public String getPhoneByNickname(String nickname) {
         MongoDBConnectionFactory mongoDBConnectionFactory = ContextHolder.applicationContext.getBean(MongoDBConnectionFactory.class);
@@ -235,7 +409,6 @@ public class TeleAuthentication extends TelegramLongPollingBot {
 
     private UserTele getInfoByChatID(String chatID) {
         MongoDBConnectionFactory mongoDBConnectionFactory = ContextHolder.applicationContext.getBean(MongoDBConnectionFactory.class);
-
         MongoDatabase db = mongoDBConnectionFactory.getDB();
         MongoCollection<Document> collection = db.getCollection("user_tele");
         Document filter = new Document("chatID", chatID);
@@ -273,10 +446,8 @@ public class TeleAuthentication extends TelegramLongPollingBot {
         return user;
     }
 
-
     private void saveUserInfo(String nickname, String chatId) {
         MongoDBConnectionFactory mongoDBConnectionFactory = ContextHolder.applicationContext.getBean(MongoDBConnectionFactory.class);
-
         MongoDatabase db = mongoDBConnectionFactory.getDB();
         MongoCollection<Document> collection = db.getCollection("user_tele");
         Document document = new Document();
@@ -287,8 +458,7 @@ public class TeleAuthentication extends TelegramLongPollingBot {
         document.put("otp", "");
         document.put("timeToExpired", 0);
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        String formattedDate = dateFormat.format(new Date());
-        document.put("createdDate", formattedDate);
+        document.put("createdDate", dateFormat.format(new Date()));
         collection.insertOne(document);
     }
 
@@ -303,7 +473,6 @@ public class TeleAuthentication extends TelegramLongPollingBot {
 
     private void saveOTP(String chatId, String otp) {
         MongoDBConnectionFactory mongoDBConnectionFactory = ContextHolder.applicationContext.getBean(MongoDBConnectionFactory.class);
-
         MongoDatabase db = mongoDBConnectionFactory.getDB();
         MongoCollection<Document> collection = db.getCollection("user_tele");
         Document filter = new Document("chatID", chatId);
@@ -313,7 +482,6 @@ public class TeleAuthentication extends TelegramLongPollingBot {
         collection.updateOne(filter, updateDocument);
     }
 
-
     private void savePhone(String chatId, String phone) {
         if (phone != null) {
             phone = phone.trim();
@@ -322,52 +490,11 @@ public class TeleAuthentication extends TelegramLongPollingBot {
             }
         }
         MongoDBConnectionFactory mongoDBConnectionFactory = ContextHolder.applicationContext.getBean(MongoDBConnectionFactory.class);
-
         MongoDatabase db = mongoDBConnectionFactory.getDB();
         MongoCollection<Document> collection = db.getCollection("user_tele");
         Document filter = new Document("chatID", chatId);
         Document updateDocument = new Document("$set", new Document("phoneNumber", phone));
         collection.updateOne(filter, updateDocument);
-    }
-
-    private void saveOTPPhone(String chatId, String otp) {
-        MongoDBConnectionFactory mongoDBConnectionFactory = ContextHolder.applicationContext.getBean(MongoDBConnectionFactory.class);
-
-        MongoDatabase db = mongoDBConnectionFactory.getDB();
-        MongoCollection<Document> collection = db.getCollection("user_tele");
-        Document filter = new Document("chatID", chatId);
-        Document updateDocument = new Document("$set", new Document("otp", otp));
-        collection.updateOne(filter, updateDocument);
-    }
-
-    private void handlePhoneNumber(String chatId, String phoneNumber) {
-        if (phoneNumber != null) {
-            phoneNumber = phoneNumber.trim();
-            if (phoneNumber.startsWith("+")) {
-                phoneNumber = phoneNumber.replace("+", "");
-            }
-        }
-        try {
-            UserTele userTele = getInfoByChatID(chatId);
-            if (userTele == null) {
-                sendMessageToUser("Vui lòng mở link kích hoạt từ game trước.", chatId);
-                return;
-            }
-
-            String storedPhone = getPhoneByNickname(userTele.getNickname());
-            if (!storedPhone.isEmpty() && !normalizePhoneNumber(storedPhone).equals(normalizePhoneNumber(phoneNumber))) {
-                sendMessageToUser("Số điện thoại không khớp với SĐT đã đăng ký trong game (" + userTele.getNickname() + ").\nVui lòng dùng đúng SĐT đã nhập trong game.", chatId);
-                return;
-            }
-
-            savePhone(chatId, phoneNumber);
-            String otp = generateOTP();
-            saveOTP(chatId, otp);
-            saveOTPPhone(userTele.getNickname(), otp, phoneNumber);
-            sendOTPActivePhone(chatId, otp);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     private void saveOTPPhone(String nickname, String otp, String phone) {
@@ -378,7 +505,6 @@ public class TeleAuthentication extends TelegramLongPollingBot {
             }
         }
         MongoDBConnectionFactory mongoDBConnectionFactory = ContextHolder.applicationContext.getBean(MongoDBConnectionFactory.class);
-
         MongoDatabase db = mongoDBConnectionFactory.getDB();
         MongoCollection<Document> collection = db.getCollection("user_phone");
         Document filter = new Document("nickname", nickname);
@@ -406,82 +532,12 @@ public class TeleAuthentication extends TelegramLongPollingBot {
         return phoneNumber;
     }
 
-
     private String generateOTP() {
         StringBuilder otp = new StringBuilder();
         for (int i = 0; i < 6; i++) {
             otp.append(random.nextInt(10));
         }
         return otp.toString();
-    }
-
-    private void sendOTPActivePhone(String chatId, String otp) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText("Cảm ơn bạn đã chia sẻ số điện thoại" + "\n" + "Mã OTP của bạn là : " + otp + " và có hiệu lực trong vòng 5 phút." + "\n" + "Vui lòng hoàn tất đăng ký và kết nối lại để chơi game." + "\n" + "Xin cảm ơn.");
-        try {
-            String traceId = RandomStringUtils.randomNumeric(10);
-            System.out.println("Waiting TPS..." + traceId);
-            if (blockingQueue.poll(10, TimeUnit.SECONDS) != null) {
-                System.out.println("Send message " + traceId);
-                sendMessageToUser(message.getText(), chatId);
-            } else {
-                System.out.println("Send message timeout" + traceId);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void sendOTP(String chatId, String otp) {
-
-        TeleMessageProcess messageProcess = () -> {
-            SendMessage message = new SendMessage();
-            message.setChatId(chatId);
-            message.setText("Mã OTP của bạn là : " + otp + " và có hiệu lực trong vòng 5 phút.");
-            try {
-                String traceId = RandomStringUtils.randomNumeric(10);
-                System.out.println("Waiting TPS..." + traceId);
-                if (blockingQueue.poll(10, TimeUnit.SECONDS) != null) {
-                    System.out.println("Send message..." + traceId);
-                    sendMessageToUser(message.getText(), chatId);
-                } else {
-                    System.out.println("Send message timeout" + traceId);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        };
-
-        messageQueue.add(messageProcess);
-    }
-
-    public void sendMessageToUser(String message, String chatId) {
-
-        TeleMessageProcess messageProcess = () -> {
-            Response response = null;
-            try {
-                OkHttpClient client = HttpCommon.getInstance().getHttpClient().newBuilder()
-                        .connectTimeout(3, TimeUnit.SECONDS)
-                        .readTimeout(3, TimeUnit.SECONDS)
-                        .build();
-                Request request = new Request.Builder()
-                        .url("https://api.telegram.org/bot8684178141:AAEFo8e2Nx-S_3h4vdcbGZjfuMuRaOS5aEI/sendMessage?text=" + encodeValue(message) +
-                                "&chat_id=" + chatId + "&parse_mode=HTML")
-                        .method("GET", null)
-                        .build();
-                response = client.newCall(request).execute();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (response != null) {
-                    response.close();
-                }
-            }
-        };
-
-        messageQueue.add(messageProcess);
     }
 
     private static String encodeValue(String value) throws UnsupportedEncodingException {

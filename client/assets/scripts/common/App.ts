@@ -352,21 +352,29 @@ export default class App extends cc.Component {
         }
         if(option && (option.src !== undefined) && (option.src !== null)) {
             BundleControl.loadScene(option.src, sceneName).then(scene => {
-                // Release previous game bundle when returning to Lobby to free memory
-                if(sceneName === 'Lobby' && this._currentGameBundle) {
-                    BundleControl.releaseGameBundle(this._currentGameBundle);
-                    this._currentGameBundle = null;
-                }
+                // Capture bundle to release BEFORE updating state
+                const bundleToRelease = (sceneName === 'Lobby') ? this._currentGameBundle : null;
 
                 // Track current game bundle (not for Lobby itself)
                 if(sceneName !== 'Lobby') {
                     this._currentGameBundle = option.src;
+                } else {
+                    this._currentGameBundle = null;
                 }
 
                 if(onLoaded != null) {
                     onLoaded();
                 }
                 App.instance.isDownloadingGame = false;
+
+                // Release old game bundle AFTER the new scene launches and old scene is destroyed.
+                // Releasing BEFORE runScene corrupts Cocos UUID import table while game assets are still in use.
+                if(bundleToRelease) {
+                    cc.director.once(cc.Director.EVENT_AFTER_SCENE_LAUNCH, () => {
+                        BundleControl.releaseGameBundle(bundleToRelease);
+                    }, this);
+                }
+
                 cc.director.runScene(scene);
             });
         }
