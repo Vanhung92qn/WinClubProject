@@ -8,7 +8,7 @@ import cmd from "../../../../scripts/common/Lobby.Cmd";
 import SlotNetworkClient from "../../../../scripts/networks/SlotNetworkClient";
 import ShootFishNetworkClient from "../../../../scripts/networks/ShootFishNetworkClient";
 import SPUtils from "../../../../scripts/common/SPUtils";
-import PopupUpdateNickname from "../PopupUpdateNickname";
+import PopupUpdateNickname from "../account/PopupUpdateNickname";
 import PopupUpdateNicknameSunwin from "./PopupUpdateNicknameSunwin";
 import lobbyPopUploginV2 from "./Lobby.PopUploginV2";
 import utils from "../../../../scripts/common/Utils";

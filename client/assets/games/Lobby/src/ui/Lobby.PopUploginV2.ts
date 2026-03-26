@@ -8,9 +8,9 @@ import MiniGameNetworkClient from "../../../../scripts/networks/MiniGameNetworkC
 import cmd from "../../../../scripts/common/Lobby.Cmd";
 import ShootFishNetworkClient from "../../../../scripts/networks/ShootFishNetworkClient";
 import SlotNetworkClient from "../../../../scripts/networks/SlotNetworkClient";
-import PopupUpdateNickname from "../PopupUpdateNickname";
+import PopupUpdateNickname from "../account/PopupUpdateNickname";
 import InPacket from "../../../../scripts/networks/Network.InPacket";
-import PopupSecurityPhone from "../Lobby.PopupSecurityPhone";
+import PopupSecurityPhone from "../account/Lobby.PopupSecurityPhone";
 import PopupUpdatePhone from "./PopupUpdatePhone";
 
 const {ccclass, property} = cc._decorator;
