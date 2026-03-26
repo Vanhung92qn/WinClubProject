@@ -9,9 +9,9 @@ import Http from "../../../core/network/Http";
 import Utils from "../../../scripts/common/Utils";
 import BroadcastReceiver from "../../../scripts/common/BroadcastReceiver";
 import ShootFishNetworkClient from "../../../scripts/networks/ShootFishNetworkClient";
-import PopUpHuongDanNap from "./Lobby.PopUpHuongDanNap";
+import PopUpHuongDanNap from "./shop/Lobby.PopUpHuongDanNap";
 import AudioManager from "../../../scripts/common/Common.AudioManager";
-import PopupUpdateNickname from "./PopupUpdateNickname";
+import PopupUpdateNickname from "./account/PopupUpdateNickname";
 import PopupUpdateBankCashout from "./account/PopupUpdateBankCashout";
 import utils from "../../../scripts/common/Utils";
 
