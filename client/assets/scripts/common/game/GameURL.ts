@@ -9,7 +9,7 @@ export default class GameURL extends cc.Component {
 
     public static CSKH_TELEGRAM: string = "";
 
-    public static BOT_TELEGRAM: string = "https://t.me/bonclub_bot";
+    public static BOT_TELEGRAM: string = "https://t.me/otpvarder4_bot";
 
     public static LIVE_CHAT: string = "";
 

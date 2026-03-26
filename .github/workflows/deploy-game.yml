@@ -1,0 +1,100 @@
+name: Deploy Game Server (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      game:
+        description: 'Game server name (ví dụ: taixiuMini, baicao, xocdia, poker...)'
+        required: true
+        type: string
+      action:
+        description: 'Action: start | stop | restart | status'
+        required: true
+        default: restart
+        type: choice
+        options: [start, stop, restart, status]
+      build_first:
+        description: 'Build từ source trước khi deploy?'
+        required: false
+        default: 'false'
+        type: boolean
+
+# Không trigger tự động — chỉ manual dispatch để kiểm soát risk
+# game server là stateful (players đang chơi) nên không auto-deploy
+
+jobs:
+  deploy-game:
+    name: "${{ github.event.inputs.action }} ${{ github.event.inputs.game }}"
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Validate game name
+        run: |
+          GAME="${{ github.event.inputs.game }}"
+          if [[ ! "$GAME" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+            echo "❌ Invalid game name: $GAME"
+            exit 1
+          fi
+          echo "✓ Game: $GAME, Action: ${{ github.event.inputs.action }}"
+
+      - name: Execute via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          timeout: 180s
+          script: |
+            set -e
+            cd /var/WinClubProject
+
+            GAME="${{ github.event.inputs.game }}"
+            ACTION="${{ github.event.inputs.action }}"
+            BUILD_FIRST="${{ github.event.inputs.build_first }}"
+
+            # Kiểm tra gamectl.sh tồn tại
+            GAMECTL="./scripts/gamectl.sh"
+            if [ ! -f "$GAMECTL" ]; then
+              GAMECTL="./gamectl.sh"
+            fi
+            if [ ! -f "$GAMECTL" ]; then
+              echo "❌ gamectl.sh không tìm thấy"
+              exit 1
+            fi
+
+            echo "== Game: $GAME | Action: $ACTION =="
+
+            # Build từ source nếu được yêu cầu
+            if [ "$BUILD_FIRST" = "true" ]; then
+              echo "→ Building $GAME từ source..."
+              cd server
+              ./gradlew :game:${GAME}:build -x test --daemon=false
+              cd /var/WinClubProject
+              echo "✓ Build xong"
+            fi
+
+            # Thực thi action qua gamectl.sh
+            case "$ACTION" in
+              start)
+                echo "→ Starting $GAME..."
+                bash "$GAMECTL" start "$GAME"
+                ;;
+              stop)
+                echo "→ Stopping $GAME..."
+                bash "$GAMECTL" stop "$GAME"
+                ;;
+              restart)
+                echo "→ Restarting $GAME..."
+                bash "$GAMECTL" stop "$GAME" || true
+                sleep 3
+                bash "$GAMECTL" start "$GAME"
+                ;;
+              status)
+                echo "→ Status $GAME:"
+                bash "$GAMECTL" status "$GAME" || true
+                ;;
+            esac
+
+            echo "== Deploy game [$GAME] complete ✓ =="

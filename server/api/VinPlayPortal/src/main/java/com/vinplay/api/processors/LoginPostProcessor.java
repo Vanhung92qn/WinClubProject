@@ -23,8 +23,10 @@ package com.vinplay.api.processors;
 
 import bitzero.util.common.business.Debug;
 import com.hazelcast.core.IMap;
+import com.vinplay.api.utils.PasswordService;
 import com.vinplay.api.utils.PortalUtils;
 import com.vinplay.api.utils.SocialUtils;
+import com.vinplay.usercore.dao.impl.SecurityDaoImpl;
 import com.vinplay.usercore.service.CacheService;
 import com.vinplay.usercore.service.OtpService;
 import com.vinplay.usercore.service.impl.CacheServiceImpl;
@@ -44,18 +46,7 @@ import com.vinplay.vbee.common.response.LoginResponse;
 import com.vinplay.vbee.common.utils.VinPlayUtils;
 import org.apache.log4j.Logger;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.security.*;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.Date;
 
 public class LoginPostProcessor
@@ -66,25 +57,14 @@ public class LoginPostProcessor
         HttpServletRequest request = param.get();
         String username = param.get().getParameter("un");
         System.out.println("process login with username(method POST) : " + username);
-        String password = param.get().getParameter("pw");
-        String realpass = "";
-        if (password.length() != 32) {
-            try {
-                password = new String(Base64.getDecoder().decode(password)); // todo bỏ command khi
-                realpass = this.getRealPass(password, username);
-                try {
-                    password = VinPlayUtils.getMD5Hash(realpass);
-                } catch (UnsupportedEncodingException | NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                }
-            } catch (Exception ignored) {
-            }
-        }
+        String encryptedPw = param.get().getParameter("pw");
+        // Decrypt AES-encrypted password from client → plaintext
+        String plainPassword = PasswordService.decryptClientPassword(encryptedPw);
         String social = param.get().getParameter("s");
         String accessToken = param.get().getParameter("at");
         request.getHeader("user-agent");
-        logger.debug((Object) ("Request login: username: " + username + ", password: " + password + ", social: " + social + ", accessToken: " + accessToken));
-        if (username != null && password != null || social != null && (social.equals("fb") || social.equals("gg")) && accessToken != null) {
+        logger.debug((Object) ("Request login: username: " + username + ", social: " + social + ", accessToken: " + accessToken));
+        if (username != null && plainPassword != null || social != null && (social.equals("fb") || social.equals("gg")) && accessToken != null) {
             LoginResponse res = new LoginResponse(false, "1009");
             if (username == null || username.length() > 20 || username.length() < 6) {
                 return res.toJson();
@@ -177,7 +157,19 @@ public class LoginPostProcessor
                             return res.toJson();
                         }
                         if (!userModel2.isBanLogin()) {
-                            if (userModel2.getPassword().equals(password)) {
+                            // BCrypt verification (also supports legacy MD5 hashes)
+                            if (PasswordService.verifyPassword(plainPassword, userModel2.getPassword())) {
+                                // Auto-migrate legacy MD5 → BCrypt on successful login
+                                if (PasswordService.isLegacyHash(userModel2.getPassword())) {
+                                    try {
+                                        String bcryptHash = PasswordService.hashPassword(plainPassword);
+                                        SecurityDaoImpl secDao = new SecurityDaoImpl();
+                                        secDao.updateUserInfo(userModel2.getId(), bcryptHash, 2);
+                                        logger.debug("Migrated password to BCrypt for user: " + username);
+                                    } catch (Exception migErr) {
+                                        logger.debug("BCrypt migration failed (non-blocking): " + migErr.getMessage());
+                                    }
+                                }
                                 if (userModel2.getNickname() != null && !userModel2.getNickname().trim().isEmpty()) {
                                     if (userModel2.isHasLoginSecurity() && userModel2.getLoginOtp() >= 0L && userModel2.getLoginOtp() <= userModel2.getVinTotal()) {
                                         // send otp
@@ -214,89 +206,5 @@ public class LoginPostProcessor
         return "MISSING PARAMETTER";
     }
 
-    public String getRealPass(String encryptPass, String username) {
-        String realpass = "";
-        try {
-            realpass = decrypt(encryptPass, "12345");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidAlgorithmParameterException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        }
-        return realpass;
-    }
-
-    public String decrypt(String strToDecrypt, String secret) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-
-        byte[] cipherData = Base64.getDecoder().decode(strToDecrypt);
-        byte[] saltData = Arrays.copyOfRange(cipherData, 8, 16);
-
-        MessageDigest md5 = MessageDigest.getInstance("MD5");
-        final byte[][] keyAndIV = GenerateKeyAndIV(32, 16, 1, saltData, secret.getBytes(StandardCharsets.UTF_8), md5);
-        SecretKeySpec key = new SecretKeySpec(keyAndIV[0], "AES");
-        IvParameterSpec iv = new IvParameterSpec(keyAndIV[1]);
-
-        byte[] encrypted = Arrays.copyOfRange(cipherData, 16, cipherData.length);
-        Cipher aesCBC = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        aesCBC.init(Cipher.DECRYPT_MODE, key, iv);
-        byte[] decryptedData = aesCBC.doFinal(encrypted);
-        String decryptedText = new String(decryptedData, StandardCharsets.UTF_8);
-        return decryptedText;
-    }
-
-    public static byte[][] GenerateKeyAndIV(int keyLength, int ivLength, int iterations, byte[] salt, byte[] password, MessageDigest md) {
-
-        int digestLength = md.getDigestLength();
-        int requiredLength = (keyLength + ivLength + digestLength - 1) / digestLength * digestLength;
-        byte[] generatedData = new byte[requiredLength];
-        int generatedLength = 0;
-
-        try {
-            md.reset();
-
-            // Repeat process until sufficient data has been generated
-            while (generatedLength < keyLength + ivLength) {
-
-                // Digest data (last digest if available, password data, salt if available)
-                if (generatedLength > 0)
-                    md.update(generatedData, generatedLength - digestLength, digestLength);
-                md.update(password);
-                if (salt != null)
-                    md.update(salt, 0, 8);
-                md.digest(generatedData, generatedLength, digestLength);
-
-                // additional rounds
-                for (int i = 1; i < iterations; i++) {
-                    md.update(generatedData, generatedLength, digestLength);
-                    md.digest(generatedData, generatedLength, digestLength);
-                }
-
-                generatedLength += digestLength;
-            }
-
-            // Copy key and IV into separate byte arrays
-            byte[][] result = new byte[2][];
-            result[0] = Arrays.copyOfRange(generatedData, 0, keyLength);
-            if (ivLength > 0)
-                result[1] = Arrays.copyOfRange(generatedData, keyLength, keyLength + ivLength);
-
-            return result;
-
-        } catch (DigestException e) {
-            throw new RuntimeException(e);
-
-        } finally {
-            // Clean out temporary data
-            Arrays.fill(generatedData, (byte) 0);
-        }
-    }
 }
 

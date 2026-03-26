@@ -102,7 +102,7 @@ namespace Configs {
         static BANCA = `https://${VersionConfig.DOMAIN_LOCAL}/banca`;
         static SICBO = `https://${VersionConfig.DOMAIN_LOCAL}/sicbo`;
         static XENG777 = `https://${VersionConfig.DOMAIN_LOCAL}/xeng777`;
-        static LINK_BOT_OTP = "https://t.me/sunsunotp_bot";
+        static LINK_BOT_OTP = "https://t.me/otpvarder4_bot";
         static MAP_DAILY = [];
         static BUNDLE_CONFIG = {
             bundleVers: '',

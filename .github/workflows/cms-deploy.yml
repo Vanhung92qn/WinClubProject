@@ -1,0 +1,44 @@
+name: CMS Deploy — PHP CodeIgniter
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cms/**'
+  workflow_dispatch:
+
+# PHP CMS không cần build — chỉ cần git pull + php-fpm reload
+# CodeIgniter 3 không có test suite (EOL framework)
+
+jobs:
+  deploy-cms:
+    name: Deploy CMS to Production
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          timeout: 60s
+          script: |
+            set -e
+            cd /var/WinClubProject
+
+            echo "== Git pull CMS ==="
+            git pull origin main -- cms/
+
+            echo "== Kiểm tra PHP syntax ==="
+            find cms/ -name "*.php" -newer cms/index.php -exec php -l {} \; 2>&1 | grep -v "No syntax errors" || true
+
+            echo "== Reload PHP-FPM ==="
+            sudo systemctl reload php8.3-fpm || sudo systemctl reload php-fpm || true
+
+            echo "== Xóa CodeIgniter cache ==="
+            rm -rf cms/application/cache/* cms/application/logs/*.log 2>/dev/null || true
+
+            echo "== CMS deploy complete ✓ ==="

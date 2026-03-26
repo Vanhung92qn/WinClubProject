@@ -38,7 +38,7 @@ import java.util.concurrent.*;
 @Service
 public class TeleAuthentication extends TelegramLongPollingBot {
 
-    private static final String TELEGRAM_API_URL = "https://api.telegram.org/bot6831621160:AAHPfkEON1-u2e44F8WAVdu5vT9ySql8ztA/sendMessage";
+    private static final String TELEGRAM_API_URL = "https://api.telegram.org/bot8684178141:AAEFo8e2Nx-S_3h4vdcbGZjfuMuRaOS5aEI/sendMessage";
     private final OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(3, TimeUnit.SECONDS)
             .writeTimeout(3, TimeUnit.SECONDS)
@@ -506,7 +506,7 @@ public class TeleAuthentication extends TelegramLongPollingBot {
                         .readTimeout(3, TimeUnit.SECONDS)
                         .build();
                 Request request = new Request.Builder()
-                        .url("https://api.telegram.org/bot" + getBotToken() + "/sendMessage?text=" + encodeValue(message) +
+                        .url("https://api.telegram.org/bot8684178141:AAEFo8e2Nx-S_3h4vdcbGZjfuMuRaOS5aEI + "/sendMessage?text=" + encodeValue(message) +
                                 "&chat_id=" + chatId + "&parse_mode=HTML")
                         .method("GET", null)
                         .build();
@@ -530,11 +530,11 @@ public class TeleAuthentication extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "BonWin";
+        return "otpvarder4_bot";
     }
 
     @Override
     public String getBotToken() {
-        return "6831621160:AAHPfkEON1-u2e44F8WAVdu5vT9ySql8ztA";
+        return "8684178141:AAEFo8e2Nx-S_3h4vdcbGZjfuMuRaOS5aEI";
     }
 }

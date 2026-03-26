@@ -3,9 +3,19 @@
 # Tune paths: /livestream/, h5live Origin/Referer if your product differs.
 # Source lineage: sites-available/vic68.win (trimmed; no server/ssl wrapper).
 
+    # ── Rate limiting zones (must be in http{} block, NOT here) ──────────────
+    # Add the following lines to /etc/nginx/nginx.conf inside the http{} block:
+    #
+    #   limit_req_zone $binary_remote_addr zone=api_limit:10m rate=30r/s;
+    #   limit_req_zone $binary_remote_addr zone=login_limit:10m rate=5r/m;
+    #
+    # Then the location blocks below use limit_req to enforce limits.
+
     # ── API v1 Gateway (versioned, new clients) ──────────────────────────────
     # Client: https://${DOMAIN}/api/v1  → VinPlayPortal (port 8081)
     location /api/v1 {
+        limit_req zone=api_limit burst=50 nodelay;
+        limit_req_status 429;
         proxy_pass http://127.0.0.1:8081/api;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -81,8 +91,10 @@
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # General API endpoint with CORS
+    # General API endpoint with CORS + rate limiting
     location /api {
+        limit_req zone=api_limit burst=50 nodelay;
+        limit_req_status 429;
         proxy_pass http://127.0.0.1:8081/api;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

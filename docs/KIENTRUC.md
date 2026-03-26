@@ -320,20 +320,28 @@ VinPlayDAL (DAO) ← VinPlayUserCore ← VinPlayPortal
 
 ## PHẦN 5: LỘ TRÌNH CHUYỂN ĐỔI (Strangler Fig Pattern)
 
-### Phase 0 — Chuẩn bị (1-2 tuần)
-- [ ] Thiết lập monitoring stack (Prometheus + Grafana + Loki)
+### Phase 0 — Chuẩn bị
+- [x] **Thiết lập monitoring stack** (Prometheus + Grafana + Loki) ✅ `monitoring/`
 - [ ] Centralize config vào `infra/config/` + symlink cho các service
-- [ ] Đổi RabbitMQ credentials ra khỏi guest/guest → dùng .env
+- [x] Đổi RabbitMQ credentials ra khỏi guest/guest ✅ (rmq_password=MgqzAtRy... trong rmq.properties)
 - [ ] Thêm health check endpoints cho mỗi service
-- **Files:** `docker/docker-compose.yml`, `config/*.properties`, `monitoring/`
+- **Files:** `monitoring/docker-compose.yml`, `monitoring/prometheus/`, `monitoring/loki/`, `monitoring/promtail/`
 
-### Phase 1 — Security Quick Wins (2-4 tuần)
-- [ ] Migrate password hashing từ MD5 → BCrypt (với migration tự động khi user login)
-  - File: `server/shared/VBeeSecurity/` + `VinPlayPortal/processors/login/`
+> **Deploy monitoring:** `cd monitoring && docker compose up -d`
+> Grafana: http://server:3000 (admin / $GRAFANA_PASSWORD)
+> **Cần thêm vào `/etc/nginx/nginx.conf`:** `include /etc/nginx/snippets/rate-limit.conf;`
+
+### Phase 1 — Security Quick Wins
+- [x] **Migrate password hashing MD5 → BCrypt** ✅
+  - `LoginProcessor.java` — BCrypt + auto-migration ✅
+  - `LoginPostProcessor.java` — fixed (was MD5 raw) ✅
+  - `LoginAdminProcessor.java` — fixed (was raw equals) ✅
+  - `PasswordService.java` — centralized BCrypt + legacy MD5 fallback ✅
 - [ ] Rotate tất cả credentials về biến môi trường (`.env`)
-- [ ] Thêm rate limiting trên Nginx cho `/api` endpoint
+- [x] **Thêm rate limiting Nginx** ✅ `nginx/snippets/rate-limit.conf` + `winclub-game-routes.inc`
+  - 30 req/s cho `/api` và `/api/v1` (burst 50)
+  - Cần chạy: `sudo cp nginx/snippets/rate-limit.conf /etc/nginx/snippets/ && sudo nginx -s reload`
 - [ ] Update CMS từ CodeIgniter 3 → CodeIgniter 4 (drop-in compatible)
-- **Không cần downtime**, migration password transparent với user
 
 ### Phase 2 — Client Lazy Loading Architecture (ƯU TIÊN CAO NHẤT)
 

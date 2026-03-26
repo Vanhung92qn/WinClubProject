@@ -1,0 +1,203 @@
+name: Backend CI/CD — Portal & APIs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/api/**'
+      - 'server/VinPlayUserCore/**'
+      - 'server/VinPlayDAL/**'
+      - 'server/VbeeCommon/**'
+      - 'server/VBeeSecurity/**'
+      - 'server/BitzeroAll/**'
+      - 'server/CardCoreLib/**'
+      - 'server/build.gradle'
+      - 'server/settings.gradle'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'server/api/**'
+      - 'server/VinPlayUserCore/**'
+      - 'server/VinPlayDAL/**'
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy (portal | backend | wsreport | wspay | all)'
+        required: true
+        default: 'portal'
+        type: choice
+        options: [portal, backend, wsreport, wspay, all]
+
+env:
+  JAVA_VERSION: '11'
+  GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true'
+
+jobs:
+  # ── 1. BUILD & TEST ────────────────────────────────────────────────────────
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: gradle
+
+      - name: Gradle permission
+        run: chmod +x server/gradlew
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('server/**/*.gradle') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Build shared libraries
+        working-directory: server
+        run: |
+          ./gradlew :VbeeCommon:build \
+                    :VBeeSecurity:build \
+                    :VinPlayDAL:build \
+                    :VinPlayUserCore:build \
+                    :CardCoreLib:build \
+                    :BitzeroAll:build \
+                    -x test --info
+
+      - name: Build API services
+        working-directory: server
+        run: |
+          ./gradlew :VinPlayPortal:build \
+                    :VinPlayBackend:build \
+                    :wsreport:build \
+                    :wspay:build \
+                    -x test --info
+
+      - name: Run VinPlayPortal tests (JUnit 5)
+        working-directory: server
+        run: ./gradlew :VinPlayPortal:test --info
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: server/api/VinPlayPortal/build/test-results/**/*.xml
+          check_name: VinPlayPortal Tests
+
+      - name: Upload JARs as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-jars-${{ github.sha }}
+          path: |
+            server/api/VinPlayPortal/build/libs/*.jar
+            server/api/VinPlayBackend/build/libs/*.jar
+            server/api/wsreport/build/libs/*.jar
+            server/api/wspay/build/libs/*.jar
+          retention-days: 7
+
+  # ── 2. DEPLOY (chỉ chạy trên push main, không chạy PR) ────────────────────
+  deploy:
+    name: Deploy to Production
+    needs: build-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    environment: production          # Requires manual approval nếu cần
+
+    steps:
+      - name: Determine deploy target
+        id: target
+        run: |
+          INPUT="${{ github.event.inputs.service }}"
+          echo "service=${INPUT:-all}" >> $GITHUB_OUTPUT
+
+      - name: Download JARs
+        uses: actions/download-artifact@v4
+        with:
+          name: api-jars-${{ github.sha }}
+          path: dist/
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          timeout: 120s
+          script: |
+            set -e
+            cd /var/WinClubProject
+
+            echo "== Git pull =="
+            git pull origin main
+
+            SERVICE="${{ steps.target.outputs.service }}"
+            echo "== Deploying: $SERVICE =="
+
+            deploy_portal() {
+              echo "→ Portal (port 8081)"
+              cd server && ./gradlew :VinPlayPortal:build -x test --daemon=false
+              cd /var/WinClubProject/server
+              kill -9 $(ps aux | grep "VinPlayPortal.jar" | grep -v grep | awk '{print $2}') 2>/dev/null || true
+              sleep 2
+              cd api/VinPlayPortal
+              nohup java -cp "libs/*:build/libs/VinPlayPortal.jar" \
+                com.vinplay.api.server.JettyServer \
+                >> /home/server/logs/api_portal.log 2>&1 &
+              echo "Portal started (PID: $!)"
+            }
+
+            deploy_backend() {
+              echo "→ Backend (port 8082)"
+              cd /var/WinClubProject/server && ./gradlew :VinPlayBackend:build -x test --daemon=false
+              kill -9 $(ps aux | grep "VinPlayBackend" | grep -v grep | awk '{print $2}') 2>/dev/null || true
+              sleep 2
+              cd /var/WinClubProject/server/api/VinPlayBackend
+              nohup java -cp "libs/*:build/libs/VinPlayBackend-1.0.jar" \
+                com.vinplay.api.backend.server.VinPlayBackendMain \
+                >> /home/server/logs/api_backend.log 2>&1 &
+              echo "Backend started (PID: $!)"
+            }
+
+            deploy_wsreport() {
+              echo "→ WSReport (port 7777/8089)"
+              cd /var/WinClubProject/server && ./gradlew :wsreport:build -x test --daemon=false
+              kill -9 $(ps aux | grep "wsreport" | grep -v grep | awk '{print $2}') 2>/dev/null || true
+              sleep 2
+              cd /var/WinClubProject/server/api/wsreport
+              nohup java -jar build/libs/wsreport-1.0-SNAPSHOT.jar \
+                >> /home/server/logs/wsreport.log 2>&1 &
+              echo "WSReport started (PID: $!)"
+            }
+
+            deploy_wspay() {
+              echo "→ WSPay (port 18081)"
+              cd /var/WinClubProject/server && ./gradlew :wspay:build -x test --daemon=false
+              kill -9 $(ps aux | grep "wspay" | grep -v grep | awk '{print $2}') 2>/dev/null || true
+              sleep 2
+              cd /var/WinClubProject/server/api/wspay
+              nohup java -jar build/libs/wspay*.jar \
+                >> /home/server/logs/wspay.log 2>&1 &
+              echo "WSPay started (PID: $!)"
+            }
+
+            case "$SERVICE" in
+              portal)   deploy_portal ;;
+              backend)  deploy_backend ;;
+              wsreport) deploy_wsreport ;;
+              wspay)    deploy_wspay ;;
+              all)
+                deploy_portal
+                deploy_backend
+                deploy_wsreport
+                ;;
+            esac
+
+            echo "== Deploy complete ✓ =="

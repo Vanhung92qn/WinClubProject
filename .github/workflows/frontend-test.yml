@@ -1,0 +1,66 @@
+name: Frontend Tests — Cocos Client
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'client/assets/core/**'
+      - 'client/assets/games/Lobby/src/service/**'
+      - 'client/tests/**'
+      - 'client/__mocks__/**'
+      - 'client/package.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'client/assets/core/**'
+      - 'client/assets/games/Lobby/src/service/**'
+      - 'client/tests/**'
+      - 'client/__mocks__/**'
+      - 'client/package.json'
+
+# NOTE: Không có deploy step — Cocos Creator build yêu cầu IDE (CocosBuilder).
+# CI chỉ chạy Jest unit test cho tầng core/ và service/ (pure TypeScript, không phụ thuộc Cocos runtime).
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  jest:
+    name: Jest Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: client/package.json
+
+      - name: Install dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Run Jest tests
+        working-directory: client
+        run: npm test -- --ci --forceExit --reporters=default --reporters=jest-junit
+        env:
+          JEST_JUNIT_OUTPUT_DIR: ./test-results
+          JEST_JUNIT_OUTPUT_NAME: jest-results.xml
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: client/test-results/jest-results.xml
+          check_name: Client Jest Tests
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jest-coverage-${{ github.sha }}
+          path: client/coverage/
+          retention-days: 7

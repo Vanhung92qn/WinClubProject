@@ -2,6 +2,7 @@ package com.vinplay.api.processors;
 
 import bitzero.util.common.business.Debug;
 import com.hazelcast.core.IMap;
+import com.vinplay.api.utils.PasswordService;
 import com.vinplay.api.utils.PortalUtils;
 import com.vinplay.api.utils.SocialUtils;
 import com.vinplay.usercore.service.CacheService;
@@ -139,7 +140,8 @@ public class LoginAdminProcessor implements BaseProcessor<HttpServletRequest, St
                             return res.toJson();
                         }
                         if (!userModel2.isBanLogin()) {
-                            if (userModel2.getPassword().equals(password)) {
+                            // BCrypt verification (also supports legacy MD5 hashes)
+                            if (PasswordService.verifyPassword(password, userModel2.getPassword())) {
                                 if (userModel2.getNickname() != null && !userModel2.getNickname().trim().isEmpty()) {
                                     if (userModel2.isHasLoginSecurity() && userModel2.getLoginOtp() >= 0L && userModel2.getLoginOtp() <= userModel2.getVinTotal()) {
                                         // send otp
