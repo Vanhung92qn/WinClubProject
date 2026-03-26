@@ -12,7 +12,7 @@ import ShootFishNetworkClient from "../../../scripts/networks/ShootFishNetworkCl
 import PopUpHuongDanNap from "./Lobby.PopUpHuongDanNap";
 import AudioManager from "../../../scripts/common/Common.AudioManager";
 import PopupUpdateNickname from "./PopupUpdateNickname";
-import PopupUpdateBankCashout from "./PopupUpdateBankCashout";
+import PopupUpdateBankCashout from "./account/PopupUpdateBankCashout";
 import utils from "../../../scripts/common/Utils";
 
 const { ccclass, property } = cc._decorator;
