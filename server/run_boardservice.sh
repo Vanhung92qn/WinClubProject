@@ -8,20 +8,20 @@
 #./gradlew build
 
 # setting for elasticsearch in case of running in docker
-sysctl -w vm.max_map_count=262144
+# sysctl -w vm.max_map_count=262144 (Disable to prevent permission denied)
 
 # global environment
 export TZ="Asia/Ho_Chi_Minh"
 
 # make log server
-mkdir -p /home/server/logs/
+mkdir -p ./logs/
 # Absolute path this script is in, thus /home/user/bin
 SCRIPT_PATH=$(pwd)
 
 # kill java process
 killProcess() {
   echo "Working path: " . $SCRIPT_PATH
-  kill -9 $(ps aux | grep "BoardService-1.0-SNAPSHOT.jar" | grep -v 'grep' | awk '{print $2}')
+  pkill -f "BoardService" || true
 }
 
 runBoardService() {
@@ -29,7 +29,7 @@ runBoardService() {
   currentDir="api/BoardService"
   cd $currentDir
   echo "Starting BoardService..."
-  nohup java -jar build/libs/BoardService-1.0-SNAPSHOT.jar >/home/server/logs/boardService.log 2>&1 &
+  nohup java -jar build/libs/BoardService-1.0-SNAPSHOT.jar > ../../logs/boardService.log 2>&1 &
 }
 
 main() {

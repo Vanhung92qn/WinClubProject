@@ -506,7 +506,7 @@ public class TeleAuthentication extends TelegramLongPollingBot {
                         .readTimeout(3, TimeUnit.SECONDS)
                         .build();
                 Request request = new Request.Builder()
-                        .url("https://api.telegram.org/bot8684178141:AAEFo8e2Nx-S_3h4vdcbGZjfuMuRaOS5aEI + "/sendMessage?text=" + encodeValue(message) +
+                        .url("https://api.telegram.org/bot8684178141:AAEFo8e2Nx-S_3h4vdcbGZjfuMuRaOS5aEI/sendMessage?text=" + encodeValue(message) +
                                 "&chat_id=" + chatId + "&parse_mode=HTML")
                         .method("GET", null)
                         .build();
