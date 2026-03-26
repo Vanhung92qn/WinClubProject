@@ -1,0 +1,116 @@
+version: '3.8'
+
+# WinClub Observability Stack: Prometheus + Grafana + Loki + Promtail
+#
+# Khởi động:
+#   cd monitoring && docker compose up -d
+#
+# Truy cập:
+#   Grafana:    http://<server>:3000  (admin / vinclub2024)
+#   Prometheus: http://<server>:9090
+#   Loki:       http://<server>:3100  (nội bộ, không expose public)
+#
+# Kết nối vào network winclub_net (cùng network với docker-compose.yml chính)
+
+networks:
+  monitoring:
+    name: winclub_monitoring
+  winclub_net:
+    external: true
+    name: winclub_net
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+
+services:
+
+  # ── Prometheus — metrics scraping ─────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: winclub_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - monitoring
+      - winclub_net
+
+  # ── Grafana — dashboards & alerting ───────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: winclub_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-vinclub2024}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
+      GF_LOG_LEVEL: warn
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - monitoring
+
+  # ── Loki — log aggregation ─────────────────────────────────────────────────
+  loki:
+    image: grafana/loki:2.9.6
+    container_name: winclub_loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/config.yml
+    networks:
+      - monitoring
+
+  # ── Promtail — log shipper (reads Java log files) ─────────────────────────
+  promtail:
+    image: grafana/promtail:2.9.6
+    container_name: winclub_promtail
+    restart: unless-stopped
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      # Mount log directories từ host
+      - /home/server/logs:/var/log/winclub:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+
+  # ── Node Exporter — system metrics (CPU, RAM, disk) ───────────────────────
+  node_exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: winclub_node_exporter
+    restart: unless-stopped
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - monitoring

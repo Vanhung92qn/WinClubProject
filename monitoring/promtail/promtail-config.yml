@@ -1,0 +1,102 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+
+  # ── VinPlayPortal (port 8081) ──────────────────────────────────────────────
+  - job_name: portal_logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: portal
+          service: VinPlayPortal
+          __path__: /var/log/winclub/api_portal.log
+    pipeline_stages:
+      - regex:
+          expression: '(?P<level>DEBUG|INFO|WARN|ERROR|FATAL)'
+      - labels:
+          level:
+      # Filter out noisy DEBUG logs from prod (bỏ comment để bật)
+      # - match:
+      #     selector: '{level="DEBUG"}'
+      #     action: drop
+
+  # ── VinPlayBackend (port 8082) ─────────────────────────────────────────────
+  - job_name: backend_logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: backend
+          service: VinPlayBackend
+          __path__: /var/log/winclub/api_backend.log
+    pipeline_stages:
+      - regex:
+          expression: '(?P<level>DEBUG|INFO|WARN|ERROR|FATAL)'
+      - labels:
+          level:
+
+  # ── WSPay (port 18081) ────────────────────────────────────────────────────
+  - job_name: wspay_logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: wspay
+          service: WSPay
+          __path__: /var/log/winclub/wspay.log
+    pipeline_stages:
+      - regex:
+          expression: '(?P<level>DEBUG|INFO|WARN|ERROR|FATAL)'
+      - labels:
+          level:
+
+  # ── WSReport (port 7777/8089) ─────────────────────────────────────────────
+  - job_name: wsreport_logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: wsreport
+          service: WSReport
+          __path__: /var/log/winclub/wsreport.log
+    pipeline_stages:
+      - regex:
+          expression: '(?P<level>DEBUG|INFO|WARN|ERROR|FATAL)'
+      - labels:
+          level:
+
+  # ── Nginx access log ──────────────────────────────────────────────────────
+  - job_name: nginx_access
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          type: access
+          __path__: /var/log/winclub/nginx_access.log
+    pipeline_stages:
+      - regex:
+          # Standard Nginx combined log format
+          expression: '(?P<remote_addr>\S+) \S+ \S+ \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) \S+" (?P<status>\d+) (?P<body_bytes_sent>\d+)'
+      - labels:
+          method:
+          status:
+
+  # ── Nginx error log ───────────────────────────────────────────────────────
+  - job_name: nginx_error
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          type: error
+          __path__: /var/log/winclub/nginx_error.log

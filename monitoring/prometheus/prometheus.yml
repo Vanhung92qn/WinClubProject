@@ -1,0 +1,64 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    project: winclub
+
+# Alertmanager config (thêm sau nếu cần alerts qua Telegram/Slack)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
+
+scrape_configs:
+
+  # ── System metrics ─────────────────────────────────────────────────────────
+  - job_name: node
+    static_configs:
+      - targets: ['node_exporter:9100']
+        labels:
+          instance: production
+
+  # ── Nginx (cần cài nginx-prometheus-exporter trên host) ───────────────────
+  # sudo apt install prometheus-nginx-exporter  hoặc dùng Docker:
+  # docker run -d -p 9113:9113 nginx/nginx-prometheus-exporter -nginx.scrape-uri=http://localhost:8080/stub_status
+  - job_name: nginx
+    static_configs:
+      - targets: ['host.docker.internal:9113']
+        labels:
+          instance: production
+    # Bỏ comment dòng metrics_path nếu exporter dùng /metrics thay vì /nginx_metrics
+    # metrics_path: /metrics
+
+  # ── Java API services (JVM metrics qua Micrometer/Actuator — thêm sau) ────
+  # Trước mắt: Prometheus sẽ không scrape được vì Java services chưa expose /metrics
+  # Sau khi thêm micrometer-registry-prometheus vào build.gradle:
+  - job_name: vinplay_portal
+    static_configs:
+      - targets: ['host.docker.internal:8081']
+        labels:
+          service: portal
+    metrics_path: /actuator/prometheus
+    # Bỏ comment scrape_timeout nếu service chậm
+    # scrape_timeout: 10s
+    # scheme: http (mặc định)
+
+  - job_name: vinplay_backend
+    static_configs:
+      - targets: ['host.docker.internal:8082']
+        labels:
+          service: backend
+    metrics_path: /actuator/prometheus
+
+  - job_name: wspay
+    static_configs:
+      - targets: ['host.docker.internal:18081']
+        labels:
+          service: wspay
+    metrics_path: /actuator/prometheus
+
+  # ── MySQL (cần mysql_exporter) ─────────────────────────────────────────────
+  # Thêm MySQL exporter vào docker-compose.yml nếu cần
+  # - job_name: mysql
+  #   static_configs:
+  #     - targets: ['mysql_exporter:9104']
