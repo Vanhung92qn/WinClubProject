@@ -4,6 +4,20 @@
 
 ## Changelog (gần đây)
 
+### 2026-03-26 — Redesign Telegram OTP: 3-step flow (Phone → OTP → Activated)
+
+- **Vấn đề cũ:** Step1 chỉ có ô nhập OTP, không có nhập SĐT → server không biết SĐT thuộc user nào → bot Telegram kẹt dead-end. System cũ yêu cầu đăng ký SĐT qua SMS trước, nhưng giờ dùng Telegram only.
+- **Thiết kế mới — 3 bước:**
+  1. **stepPhone** (game): User nhập SĐT → `c=4123` (ActivePhoneProcessor) lưu vào `user_phone` (MongoDB)
+  2. **stepOTP** (game + Telegram): User ấn "Lấy OTP" → mở bot `?start={nickname}` → Telegram hỏi "Chia sẻ SĐT" → bot so sánh contact với `user_phone` → khớp → tạo OTP 6 số → gửi qua chat → user nhập OTP trong game → `c=4124` (CheckOtpPhoneProcessor) verify + activate cả `user_tele` + `user_phone`
+  3. **stepActivated** (game): Hiển thị trạng thái đã kích hoạt + nút hủy
+- **Bảo mật kép:** SĐT nhập trong game (step1) PHẢI khớp SĐT Telegram contact sharing (step2). Telegram đã verify SĐT khi đăng ký Telegram → tin cậy.
+- **Cross-platform:** Hoạt động trên Mobile (deep link), Desktop (Telegram Desktop), Web (t.me link) — bot link là URL universal.
+- **Server** (`TeleAuthentication.java`): Rewrite `onUpdateReceived` — tách `handleStart`, `handleResendOTP`. `/start {nickname}`: luôn tạo `user_tele`, check `user_phone` → nếu trống yêu cầu nhập SĐT trong game trước. `handlePhoneNumber`: so sánh contact với `user_phone` → khớp → OTP.
+- **Client** (`TabTelegramActive.ts`): Rewrite 3-step flow. Properties mới: `stepPhone`, `stepOTP`, `stepActivated`, `edbPhoneNumber`. Gọi `c=4123` lưu SĐT, `c=4124` verify OTP. Reset state trong `onEnable()`.
+- **Client** (`PopupSecurityPhone.ts`): Thêm `resetPanelState()` trong `show()` — fix bug panel OTP hiện trước panel SĐT khi popup SMS mở lần 2+.
+- **⚠️ Prefab cần update trong Cocos Creator:** `PopupTelegramSecurity.prefab` — đổi `step1` → `stepPhone` (thêm EditBox SĐT + nút "Tiếp tục"), thêm node `stepOTP` (EditBox OTP + nút "Lấy OTP" + nút "Xác nhận"), đổi `step2` → `stepActivated`. Xem chi tiết: [`KIENTRUC.md`](./KIENTRUC.md) hoặc comment trong `TabTelegramActive.ts`.
+
 ### 2026-03-22 — Kiến trúc Client: Lazy Loading + Tổ chức thư mục core/
 
 - **Refactor cấu trúc client:** Di chuyển files trong Cocos Creator Editor (kéo-thả để giữ UUID/.meta):

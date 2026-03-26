@@ -48,6 +48,21 @@ export default class PopupSecurityPhone extends Dialog {
         this.panelSmsPlus.continueEdbOTP.string = "";
     }
 
+    private resetPanelState() {
+        this.panelSmsPlus.update.active = true;
+        this.panelSmsPlus.continue.active = false;
+        this.panelSmsPlus.continueEdbOTP.string = "";
+        this.updateEdbPhoneNumber.string = "";
+        this.phoneNumber = "";
+        this.count = 180;
+        if (this.panelSmsPlus.countDown) this.panelSmsPlus.countDown.active = false;
+        if (Configs.Login.MobileSecured) {
+            this.panelSmsPlus.lblTitle.string = `ĐỔI SĐT BẢO MẬT`;
+        } else {
+            this.panelSmsPlus.lblTitle.string = `KÍCH HOẠT SĐT`;
+        }
+    }
+
      private count: number = 180;
 
     counter() {
@@ -56,8 +71,8 @@ export default class PopupSecurityPhone extends Dialog {
        this.count--;
        if(this.count < 0) {
             this.panelSmsPlus.lblCountDown.string = "Nếu chưa có tin nhắn gửi về Quý khách vui lòng ấn Lấy OTP để thử lại!";
-            this.panelSmsPlus.btnGetOTP.active = true;
-            this.panelSmsPlus.btnGetOTPDis.active = false;
+            if (this.panelSmsPlus.btnGetOTP) this.panelSmsPlus.btnGetOTP.active = true;
+            if (this.panelSmsPlus.btnGetOTPDis) this.panelSmsPlus.btnGetOTPDis.active = false;
             return;
        };
        setTimeout(() => {
@@ -129,11 +144,7 @@ export default class PopupSecurityPhone extends Dialog {
     }
 
     protected onLoad() {
-        if(!Configs.Login.MobileSecured) {
-            this.panelSmsPlus.update.active = true;
-            this.panelSmsPlus.continue.active = false;
-            this.panelSmsPlus.lblTitle.string = `KÍCH HOẠT SĐT`;
-        }
+        this.resetPanelState();
     }
 
     start() {
@@ -302,7 +313,7 @@ export default class PopupSecurityPhone extends Dialog {
 
     show() {
         super.show();
-        this.phoneNumber = "";
+        this.resetPanelState();
     }
 
     protected onEnable() {
