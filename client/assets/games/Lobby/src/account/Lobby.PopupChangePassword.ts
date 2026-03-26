@@ -1,8 +1,8 @@
-import Dialog from "../../../scripts/common/Dialog";
-import App from "../../../scripts/common/App";
-import MiniGameNetworkClient from "../../../scripts/networks/MiniGameNetworkClient";
-import InPacket from "../../../scripts/networks/Network.InPacket";
-import cmd from "../../../scripts/common/Lobby.Cmd";
+import Dialog from "../../../../scripts/common/Dialog";
+import App from "../../../../scripts/common/App";
+import MiniGameNetworkClient from "../../../../scripts/networks/MiniGameNetworkClient";
+import InPacket from "../../../../scripts/networks/Network.InPacket";
+import cmd from "../../../../scripts/common/Lobby.Cmd";
 
 const { ccclass, property } = cc._decorator;
 

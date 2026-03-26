@@ -1,13 +1,13 @@
-import Dialog from "../../../scripts/common/Dialog";
-import cmd from "../../../scripts/common/Lobby.Cmd";
-import InPacket from "../../../scripts/networks/Network.InPacket";
-import MiniGameNetworkClient from "../../../scripts/networks/MiniGameNetworkClient";
-import Configs from "../../../scripts/common/Configs";
-import App from "../../../scripts/common/App";
-import Utils from "../../../scripts/common/Utils";
-import BroadcastReceiver from "../../../scripts/common/BroadcastReceiver";
-import Http from "../../../core/network/Http";
-import SPUtils from "../../../scripts/common/SPUtils";
+import Dialog from "../../../../scripts/common/Dialog";
+import cmd from "../../../../scripts/common/Lobby.Cmd";
+import InPacket from "../../../../scripts/networks/Network.InPacket";
+import MiniGameNetworkClient from "../../../../scripts/networks/MiniGameNetworkClient";
+import Configs from "../../../../scripts/common/Configs";
+import App from "../../../../scripts/common/App";
+import Utils from "../../../../scripts/common/Utils";
+import BroadcastReceiver from "../../../../scripts/common/BroadcastReceiver";
+import Http from "../../../../core/network/Http";
+import SPUtils from "../../../../scripts/common/SPUtils";
 import PopupSecurityPhone from "./Lobby.PopupSecurityPhone";
 
 const {ccclass, property} = cc._decorator;

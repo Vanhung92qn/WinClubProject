@@ -8,11 +8,11 @@
 //  - [Chinese] https://docs.cocos.com/creator/manual/zh/scripting/life-cycle-callbacks.html
 //  - [English] http://www.cocos2d-x.org/docs/creator/manual/en/scripting/life-cycle-callbacks.html
 
-import Dialog from "../../../scripts/common/Dialog";
-import nodeUtils from "../../../scripts/common/NodeUtils";
-import Http from "../../../core/network/Http";
-import Configs from "../../../scripts/common/Configs";
-import App from "../../../scripts/common/App";
+import Dialog from "../../../../scripts/common/Dialog";
+import nodeUtils from "../../../../scripts/common/NodeUtils";
+import Http from "../../../../core/network/Http";
+import Configs from "../../../../scripts/common/Configs";
+import App from "../../../../scripts/common/App";
 
 const {ccclass, property} = cc._decorator;
 

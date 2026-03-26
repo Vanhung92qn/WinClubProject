@@ -1,4 +1,4 @@
-import PortalPassword from "../PortalPassword";
+import PortalPassword from "core/auth/PortalPassword";
 
 describe("PortalPassword.forApi()", () => {
 

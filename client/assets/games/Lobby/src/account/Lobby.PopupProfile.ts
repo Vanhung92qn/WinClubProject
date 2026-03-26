@@ -1,15 +1,15 @@
-import Dialog from "../../../scripts/common/Dialog";
-import BroadcastReceiver from "../../../scripts/common/BroadcastReceiver";
-import Utils from "../../../scripts/common/Utils";
-import Configs from "../../../scripts/common/Configs";
-import Http from "../../../core/network/Http";
-import App from "../../../scripts/common/App";
-import MiniGameNetworkClient from "../../../scripts/networks/MiniGameNetworkClient";
-import cmd from "../../../scripts/common/Lobby.Cmd";
-import InPacket from "../../../scripts/networks/Network.InPacket";
-import Tween from "../../../scripts/common/Tween";
-import LobbyLobbyController from "./controller/Lobby.LobbyController";
-import ShopTabEnum from "./enum/ShopTabEnum";
+import Dialog from "../../../../scripts/common/Dialog";
+import BroadcastReceiver from "../../../../scripts/common/BroadcastReceiver";
+import Utils from "../../../../scripts/common/Utils";
+import Configs from "../../../../scripts/common/Configs";
+import Http from "../../../../core/network/Http";
+import App from "../../../../scripts/common/App";
+import MiniGameNetworkClient from "../../../../scripts/networks/MiniGameNetworkClient";
+import cmd from "../../../../scripts/common/Lobby.Cmd";
+import InPacket from "../../../../scripts/networks/Network.InPacket";
+import Tween from "../../../../scripts/common/Tween";
+import LobbyLobbyController from "../controller/Lobby.LobbyController";
+import ShopTabEnum from "../enum/ShopTabEnum";
 
 var ProfileTab = cc.Enum({
     INFORMATION: "INFORMATION",

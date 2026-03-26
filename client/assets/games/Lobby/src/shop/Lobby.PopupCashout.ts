@@ -1,17 +1,17 @@
-import Dialog from "../../../scripts/common/Dialog";
-import cmd from "../../../scripts/common/Lobby.Cmd";
-import InPacket from "../../../scripts/networks/Network.InPacket";
-import MiniGameNetworkClient from "../../../scripts/networks/MiniGameNetworkClient";
-import Dropdown from "../../../scripts/common/Dropdown";
-import Configs from "../../../scripts/common/Configs";
-import App from "../../../scripts/common/App";
-import Http from "../../../core/network/Http";
-import Utils from "../../../scripts/common/Utils";
-import BroadcastReceiver from "../../../scripts/common/BroadcastReceiver";
+import Dialog from "../../../../scripts/common/Dialog";
+import cmd from "../../../../scripts/common/Lobby.Cmd";
+import InPacket from "../../../../scripts/networks/Network.InPacket";
+import MiniGameNetworkClient from "../../../../scripts/networks/MiniGameNetworkClient";
+import Dropdown from "../../../../scripts/common/Dropdown";
+import Configs from "../../../../scripts/common/Configs";
+import App from "../../../../scripts/common/App";
+import Http from "../../../../core/network/Http";
+import Utils from "../../../../scripts/common/Utils";
+import BroadcastReceiver from "../../../../scripts/common/BroadcastReceiver";
 import PopUpHuongDanNap from "./Lobby.PopUpHuongDanNap";
-import AudioManager from "../../../scripts/common/Common.AudioManager";
-import {Tab} from "./Lobby.TabsListGame";
-import nodeUtils from "../../../scripts/common/NodeUtils";
+import AudioManager from "../../../../scripts/common/Common.AudioManager";
+import {Tab} from "../Lobby.TabsListGame";
+import nodeUtils from "../../../../scripts/common/NodeUtils";
 
 const { ccclass, property } = cc._decorator;
 

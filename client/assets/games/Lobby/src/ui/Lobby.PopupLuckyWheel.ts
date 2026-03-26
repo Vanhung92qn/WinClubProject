@@ -1,10 +1,10 @@
-import Dialog from "../../../scripts/common/Dialog";
-import Configs from "../../../scripts/common/Configs";
-import MiniGameNetworkClient from "../../../scripts/networks/MiniGameNetworkClient";
-import InPacket from "../../../scripts/networks/Network.InPacket";
-import cmd from "../../../scripts/common/Lobby.Cmd";
-import BroadcastReceiver from "../../../scripts/common/BroadcastReceiver";
-import App from "../../../scripts/common/App";
+import Dialog from "../../../../scripts/common/Dialog";
+import Configs from "../../../../scripts/common/Configs";
+import MiniGameNetworkClient from "../../../../scripts/networks/MiniGameNetworkClient";
+import InPacket from "../../../../scripts/networks/Network.InPacket";
+import cmd from "../../../../scripts/common/Lobby.Cmd";
+import BroadcastReceiver from "../../../../scripts/common/BroadcastReceiver";
+import App from "../../../../scripts/common/App";
 
 const { ccclass, property } = cc._decorator;
 

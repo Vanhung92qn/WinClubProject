@@ -1,7 +1,7 @@
-import Dialog from "../../../scripts/common/Dialog";
-import App from "../../../scripts/common/App";
-import Http from "../../../core/network/Http";
-import Configs from "../../../scripts/common/Configs";
+import Dialog from "../../../../scripts/common/Dialog";
+import App from "../../../../scripts/common/App";
+import Http from "../../../../core/network/Http";
+import Configs from "../../../../scripts/common/Configs";
 import PopupTranferToDaiLy from './Lobby.PopupTranferToDaiLY';
 
 const {ccclass, property} = cc._decorator;

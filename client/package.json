@@ -18,12 +18,14 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "roots": ["<rootDir>/assets"],
-    "testMatch": ["**/__tests__/**/*.test.ts"],
+    "roots": ["<rootDir>/tests"],
+    "testMatch": ["**/*.test.ts"],
     "moduleNameMapper": {
-      "^cc$": "<rootDir>/assets/__mocks__/cc.ts"
+      "^cc$": "<rootDir>/__mocks__/cc.ts"
     },
-    "setupFiles": ["<rootDir>/assets/__mocks__/cocos-globals.ts"],
+    "setupFiles": ["<rootDir>/__mocks__/cocos-globals.ts"],
+    "modulePaths": ["<rootDir>"],
+    "moduleDirectories": ["node_modules", "<rootDir>/assets"],
     "globals": {
       "ts-jest": {
         "tsconfig": {

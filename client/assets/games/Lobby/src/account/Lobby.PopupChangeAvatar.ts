@@ -1,8 +1,8 @@
-import Dialog from "../../../scripts/common/Dialog";
-import Configs from "../../../scripts/common/Configs";
-import App from "../../../scripts/common/App";
-import Http from "../../../core/network/Http";
-import BroadcastReceiver from "../../../scripts/common/BroadcastReceiver";
+import Dialog from "../../../../scripts/common/Dialog";
+import Configs from "../../../../scripts/common/Configs";
+import App from "../../../../scripts/common/App";
+import Http from "../../../../core/network/Http";
+import BroadcastReceiver from "../../../../scripts/common/BroadcastReceiver";
 
 const { ccclass, property } = cc._decorator;
 

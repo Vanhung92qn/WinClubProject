@@ -8,9 +8,9 @@
 //  - [Chinese] https://docs.cocos.com/creator/manual/zh/scripting/life-cycle-callbacks.html
 //  - [English] http://www.cocos2d-x.org/docs/creator/manual/en/scripting/life-cycle-callbacks.html
 
-import BroadcastReceiver from "../../../scripts/common/BroadcastReceiver";
-import Dialog from "../../../scripts/common/Dialog";
-import SPUtils from "../../../scripts/common/SPUtils";
+import BroadcastReceiver from "../../../../scripts/common/BroadcastReceiver";
+import Dialog from "../../../../scripts/common/Dialog";
+import SPUtils from "../../../../scripts/common/SPUtils";
 
 
 

@@ -8,7 +8,7 @@
 // ── Mocks (phải khai báo trước import AuthService) ──
 
 const mockHttpGet = jest.fn();
-jest.mock("../../../scripts/common/Configs", () => ({
+jest.mock("scripts/common/Configs", () => ({
     default: {
         App: { API: "https://test.local/api/v1" },
         Login: {
@@ -24,8 +24,8 @@ jest.mock("../../../scripts/common/Configs", () => ({
         },
     },
 }));
-jest.mock("../../../core/network/Http", () => ({ default: { get: mockHttpGet } }));
-jest.mock("../../../scripts/common/SPUtils", () => ({
+jest.mock("core/network/Http", () => ({ default: { get: mockHttpGet } }));
+jest.mock("scripts/common/SPUtils", () => ({
     default: {
         getUserName: () => "testuser",
         getUserPass: () => "testpass",
@@ -35,7 +35,7 @@ jest.mock("../../../scripts/common/SPUtils", () => ({
         clearCredentials: jest.fn(),
     },
 }));
-jest.mock("../../../scripts/common/App", () => ({
+jest.mock("scripts/common/App", () => ({
     default: {
         instance: {
             showLoading2: jest.fn(),
@@ -43,44 +43,44 @@ jest.mock("../../../scripts/common/App", () => ({
         },
     },
 }));
-jest.mock("../../../scripts/common/BroadcastReceiver", () => ({
+jest.mock("scripts/common/BroadcastReceiver", () => ({
     default: { send: jest.fn(), USER_INFO_UPDATED: "USER_INFO_UPDATED", USER_LOGOUT: "USER_LOGOUT" },
 }));
-jest.mock("../../../scripts/common/Utils", () => ({ default: { getPlatform: () => "web" } }));
-jest.mock("../../../scripts/networks/MiniGameNetworkClient", () => ({
+jest.mock("scripts/common/Utils", () => ({ default: { getPlatform: () => "web" } }));
+jest.mock("scripts/networks/MiniGameNetworkClient", () => ({
     default: { getInstance: () => ({ sendCheck: jest.fn(), close: jest.fn() }) },
 }));
-jest.mock("../../../scripts/networks/SlotNetworkClient", () => ({
+jest.mock("scripts/networks/SlotNetworkClient", () => ({
     default: { getInstance: () => ({ sendCheck: jest.fn(), close: jest.fn() }) },
 }));
-jest.mock("../../../scripts/networks/TaiXiuNetWorkClient", () => ({
+jest.mock("scripts/networks/TaiXiuNetWorkClient", () => ({
     default: { getInstance: () => ({ checkConnect: jest.fn(), close: jest.fn() }) },
 }));
-jest.mock("../../../scripts/networks/TaiXiuMD5NetWorkClient", () => ({
+jest.mock("scripts/networks/TaiXiuMD5NetWorkClient", () => ({
     default: { getInstance: () => ({ close: jest.fn() }) },
 }));
-jest.mock("../../../scripts/networks/TienLenNetworkClient", () => ({
+jest.mock("scripts/networks/TienLenNetworkClient", () => ({
     default: { getInstance: () => ({ close: jest.fn() }) },
 }));
-jest.mock("../../../scripts/networks/BauCuaTo2NetworkClient", () => ({
+jest.mock("scripts/networks/BauCuaTo2NetworkClient", () => ({
     default: { getInstance: () => ({ close: jest.fn() }) },
 }));
-jest.mock("../../../scripts/networks/ShootFishNetworkClient", () => ({
+jest.mock("scripts/networks/ShootFishNetworkClient", () => ({
     default: { getInstance: () => ({ close: jest.fn() }) },
 }));
-jest.mock("../../../scripts/common/Lobby.Cmd", () => ({
+jest.mock("scripts/common/Lobby.Cmd", () => ({
     default: {
         ReqSubcribeJackpots: jest.fn(),
         ReqGetSecurityInfo: jest.fn(),
         ReqSubcribeHallSlot: jest.fn(),
     },
 }));
-jest.mock("../../store/UserStore", () => ({
+jest.mock("core/store/UserStore", () => ({
     default: { _notifyChange: jest.fn() },
 }));
 
 // ── Import sau khi mock ──
-import AuthService from "../AuthService";
+import AuthService from "core/auth/AuthService";
 
 // ── Base64 mock response payload ──
 const makeSessionKey = (data: object) =>
@@ -188,8 +188,8 @@ describe("AuthService.login()", () => {
 
 describe("AuthService.logout()", () => {
     it("gọi Configs.Login.clear() và clearCredentials()", () => {
-        const Configs = require("../../../scripts/common/Configs").default;
-        const SPUtils = require("../../../scripts/common/SPUtils").default;
+        const Configs = require("scripts/common/Configs").default;
+        const SPUtils = require("scripts/common/SPUtils").default;
 
         AuthService.logout();
 

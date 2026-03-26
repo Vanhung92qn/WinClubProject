@@ -1,15 +1,15 @@
-import Dialog from "../../../scripts/common/Dialog";
-import MiniGameNetworkClient from "../../../scripts/networks/MiniGameNetworkClient";
-import InPacket from "../../../scripts/networks/Network.InPacket";
-import cmd from "../../../scripts/common/Lobby.Cmd";
-import App from "../../../scripts/common/App";
-import SPUtils from "../../../scripts/common/SPUtils";
-import Http from "../../../core/network/Http";
-import utils from "../../../scripts/common/Utils";
-import BroadcastReceiver from "../../../scripts/common/BroadcastReceiver";
-import ApiIDEnum from "./enum/ApiIDEnum";
-import GameURL from "../../../scripts/common/game/GameURL";
-import Configs from "../../../scripts/common/Configs";
+import Dialog from "../../../../scripts/common/Dialog";
+import MiniGameNetworkClient from "../../../../scripts/networks/MiniGameNetworkClient";
+import InPacket from "../../../../scripts/networks/Network.InPacket";
+import cmd from "../../../../scripts/common/Lobby.Cmd";
+import App from "../../../../scripts/common/App";
+import SPUtils from "../../../../scripts/common/SPUtils";
+import Http from "../../../../core/network/Http";
+import utils from "../../../../scripts/common/Utils";
+import BroadcastReceiver from "../../../../scripts/common/BroadcastReceiver";
+import ApiIDEnum from "../enum/ApiIDEnum";
+import GameURL from "../../../../scripts/common/game/GameURL";
+import Configs from "../../../../scripts/common/Configs";
 
 const { ccclass, property } = cc._decorator;
 

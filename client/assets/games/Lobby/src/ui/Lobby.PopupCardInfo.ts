@@ -1,5 +1,5 @@
-import Dialog from "../../../scripts/common/Dialog";
-import Utils from "../../../scripts/common/Utils";
+import Dialog from "../../../../scripts/common/Dialog";
+import Utils from "../../../../scripts/common/Utils";
 
 const { ccclass, property } = cc._decorator;
 

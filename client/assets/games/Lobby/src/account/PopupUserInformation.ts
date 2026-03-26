@@ -7,7 +7,7 @@ import Configs from "../../../../scripts/common/Configs";
 import BroadcastReceiver from "../../../../scripts/common/BroadcastReceiver";
 import Dialog from "../../../../scripts/common/Dialog";
 import LobbyLobbyController from "../controller/Lobby.LobbyController";
-import PopupProfile from "../Lobby.PopupProfile";
+import PopupProfile from "./Lobby.PopupProfile";
 import AuthService from "../../../../core/auth/AuthService";
 
 const {ccclass, property} = cc._decorator;
