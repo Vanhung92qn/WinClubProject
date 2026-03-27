@@ -29,6 +29,9 @@ export default class TabTelegramActive extends cc.Component {
     @property(cc.Prefab)
     prefabPopupCancelTelegram: cc.Prefab = null;
 
+    private _currentStep: "phone" | "otp" | "activated" = "phone";
+    private _phoneSubmitted: boolean = false;
+
     protected onLoad() {
         this.showStep("phone");
         MiniGameNetworkClient.getInstance().addListener((data) => {
@@ -37,8 +40,9 @@ export default class TabTelegramActive extends cc.Component {
                 case cmd.Code.GET_SECURITY_INFO: {
                     let res = new cmd.ResGetSecurityInfo(data);
                     if (res.appSecure == 1) {
+                        this._phoneSubmitted = false;
                         this.showStep("activated");
-                    } else {
+                    } else if (!this._phoneSubmitted) {
                         this.showStep("phone");
                     }
                     break;
@@ -48,12 +52,17 @@ export default class TabTelegramActive extends cc.Component {
     }
 
     protected onEnable() {
-        this.showStep("phone");
-        this.clearInputs();
+        if (this._phoneSubmitted) {
+            this.showStep(this._currentStep);
+        } else {
+            this.showStep("phone");
+            this.clearInputs();
+        }
         MiniGameNetworkClient.getInstance().send(new cmd.ReqGetSecurityInfo());
     }
 
     private showStep(step: "phone" | "otp" | "activated") {
+        this._currentStep = step;
         if (this.stepPhone) this.stepPhone.active = (step === "phone");
         if (this.stepOTP) this.stepOTP.active = (step === "otp");
         if (this.stepActivated) this.stepActivated.active = (step === "activated");
@@ -77,7 +86,6 @@ export default class TabTelegramActive extends cc.Component {
     /**
      * stepPhone → btnXacNhan:
      * Validate + normalize SĐT → gọi c=4123 lưu lên server → chuyển stepOTP
-     * SĐT phải được lưu TRƯỚC khi mở bot lấy OTP
      */
     onSubmitPhone() {
         let raw = this.edbPhoneNumber.string.trim();
@@ -108,6 +116,7 @@ export default class TabTelegramActive extends cc.Component {
                 App.instance.actShowThongBao(res.errorCode || "Lỗi lưu SĐT.");
                 return;
             }
+            this._phoneSubmitted = true;
             this.showStep("otp");
         });
     }
@@ -119,7 +128,7 @@ export default class TabTelegramActive extends cc.Component {
 
     /**
      * stepOTP → BtnXacNhan:
-     * CHỈ gọi c=4124 verify OTP (SĐT đã được lưu ở bước trước)
+     * CHỈ gọi c=4124 verify OTP (SĐT đã được lưu ở onSubmitPhone)
      */
     onActiveTelegram() {
         let otp = this.edbOTP.string.trim();
@@ -145,6 +154,7 @@ export default class TabTelegramActive extends cc.Component {
                 return;
             }
             if (res.errorCode === "OK") {
+                this._phoneSubmitted = false;
                 App.instance.actShowThongBao("Kích hoạt bảo mật Telegram thành công!");
                 BroadcastReceiver.send(BroadcastReceiver.USER_INFO_UPDATED);
                 this.showStep("activated");
@@ -152,8 +162,9 @@ export default class TabTelegramActive extends cc.Component {
         });
     }
 
-    /** stepOTP → quay lại sửa SĐT (SĐT sẽ được lưu lại khi ấn Xác nhận lần nữa) */
+    /** stepOTP → quay lại sửa SĐT */
     onBackToPhone() {
+        this._phoneSubmitted = false;
         this.showStep("phone");
         if (this.edbOTP) this.edbOTP.string = "";
     }

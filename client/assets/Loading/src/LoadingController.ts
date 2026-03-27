@@ -354,6 +354,10 @@ export default class LoadingController extends cc.Component {
         let self = this;
         let progress = 0;
         return BundleControl.loadBundle('Lobby').then((bundle) => {
+            if (!bundle) {
+                // Bundle failed to load (network error or stale cache)
+                return Promise.resolve(null);
+            }
             // @ts-ignore
             window.lobbyBundle = bundle;
             // Also store on App instance for PopupManager/BundleControl access
@@ -375,11 +379,40 @@ export default class LoadingController extends cc.Component {
                     if(!err) {
                         resolve(sceneAsset);
                     } else {
+                        console.error('[LoadingController] loadScene Lobby failed:', err);
                         resolve(null);
                     }
                 });
             });
         });
+    }
+
+    /**
+     * Hard-reload the page with a cache-busting query string.
+     * Uses sessionStorage to detect if we already tried — prevents infinite reload loops.
+     * Scenario: iOS Safari evicts the page from memory after ~30 min background.
+     * On resume, browser serves stale Cocos bundle JSON from HTTP cache → UUID mismatch.
+     * A fresh reload with ?v=timestamp forces the browser to bypass cache.
+     */
+    private _reloadWithCacheBust() {
+        const RELOAD_KEY = 'winclub_cache_reload';
+        const lastReload = sessionStorage.getItem(RELOAD_KEY);
+        const now = Date.now();
+
+        if (lastReload && (now - parseInt(lastReload)) < 60000) {
+            // Already reloaded within the last 60s — don't loop, show error
+            console.error('[LoadingController] Lobby load failed after cache-bust reload. Possible server issue.');
+            if (this.lblStatus) {
+                this.lblStatus.string = 'Lỗi tải game. Vui lòng kiểm tra mạng và thử lại.';
+            }
+            return;
+        }
+
+        console.warn('[LoadingController] Lobby scene load failed — reloading with cache-bust...');
+        sessionStorage.setItem(RELOAD_KEY, String(now));
+        // Redirect to the same path with a fresh timestamp — bypasses browser HTTP cache
+        const url = location.pathname + '?v=' + now;
+        location.replace(url);
     }
 
     updateProgress(progress) {
@@ -391,9 +424,14 @@ export default class LoadingController extends cc.Component {
     hotUpdateLobby() {
         this.loadBundleLobby().then((sceneAsset) => {
             if(sceneAsset) {
-                // sceneAsset is now a SceneAsset from bundle.loadScene()
-                // Use runScene directly with the loaded scene asset
+                // Clear any previous reload flag — load succeeded
+                sessionStorage.removeItem('winclub_cache_reload');
                 cc.director.runScene(sceneAsset);
+            } else {
+                // Scene load failed (null sceneAsset).
+                // Most common cause on mobile: iOS Safari served stale cached bundle files
+                // after the page was evicted from memory in the background.
+                this._reloadWithCacheBust();
             }
         });
     }

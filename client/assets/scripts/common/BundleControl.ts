@@ -22,14 +22,20 @@ export default class BundleControl {
         let _selectedGameNode = cc._selectedGameNode;
         let loadingNode = null;
         let loadingBgNode = null;
-        if(_selectedGameNode) {
+        if(_selectedGameNode && cc.isValid(_selectedGameNode)) {
             loadingNode = _selectedGameNode.getChildByName("load");
             loadingBgNode = _selectedGameNode.getChildByName('load_bg');
-            loadingNode.active = true;
-            loadingBgNode.active = true;
-            loadingNode.getComponent(cc.ProgressBar).progress = 0;
-            if(_selectedGameNode.getComponent(cc.Button)) {
-                _selectedGameNode.getComponent(cc.Button).interactable = false;
+            // Guard: node may have been destroyed (e.g. when returning from a game scene)
+            if(loadingNode && loadingBgNode) {
+                loadingNode.active = true;
+                loadingBgNode.active = true;
+                loadingNode.getComponent(cc.ProgressBar).progress = 0;
+                if(_selectedGameNode.getComponent(cc.Button)) {
+                    _selectedGameNode.getComponent(cc.Button).interactable = false;
+                }
+            } else {
+                loadingNode = null;
+                loadingBgNode = null;
             }
         }
         let bundle = await this.loadBundle(bundleName);
@@ -199,18 +205,21 @@ export default class BundleControl {
     }
 
     /**
-     * Release an entire game bundle and remove it from asset manager.
-     * Call ONLY after EVENT_AFTER_SCENE_LAUNCH (old scene destroyed) to avoid
-     * corrupting the Cocos UUID import table while game assets are still in use.
+     * Release unused assets from a game bundle after returning to Lobby.
+     * Call ONLY after EVENT_AFTER_SCENE_LAUNCH (old game scene fully destroyed)
+     * so that game assets have no remaining references and will actually be freed.
+     *
+     * Rules:
+     * - DO NOT call bundle.releaseAll()   — wipes UUID import table while assets may still be in use.
+     * - DO NOT call cc.assetManager.removeBundle() — clears assetInfo.bundleUrl entries, breaking
+     *   parseImport when ANY subsequent bundle.loadScene() tries to resolve those UUIDs.
+     * - DO use bundle.releaseUnusedAssets() — only frees assets with zero remaining references.
+     *   Shared assets (fonts, common textures) that Lobby still holds are automatically preserved.
      */
     static releaseGameBundle(bundleName: string): void {
         let bundle = cc.assetManager.getBundle(bundleName);
         if (!bundle) return;
-        // removeBundle() unregisters the bundle from the registry.
-        // Assets loaded from it will be GC'd by Cocos when ref-count drops to 0.
-        // Do NOT call bundle.releaseAll() — it aggressively removes UUID entries
-        // from the global import table which can break asset loading in other bundles.
-        cc.assetManager.removeBundle(bundle);
+        bundle.releaseUnusedAssets();
         console.log(`[BundleControl] Released game bundle: ${bundleName}`);
     }
 }
